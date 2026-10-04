@@ -1,0 +1,23 @@
+{
+  "name": "chess-game-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "stockfish.js": "^10.0.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^5.0.2",
+    "tailwindcss": "^4.3.3",
+    "vite": "^7.1.7"
+  }
+}
