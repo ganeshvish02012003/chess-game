@@ -814,27 +814,58 @@ function ChessGame() {
       }
     );
 
-    const cleanupOpponentLeft = on(
-      "opponent_left",
-      () => {
-        setOnlineOpponent(null);
+const cleanupOpponentLeft = on(
+  "opponent_left",
+  ({ winner, winnerId } = {}) => {
+    setOnlineOpponent(null);
 
-        setOnlineStarted(false);
+    setGameResult({
+      type: "opponent_left",
+      winner:
+        winner === "white"
+          ? "White"
+          : "Black",
+      winnerColor: winner,
+      winnerId,
+      title: "You Win!",
+      message: "Your opponent left the game.",
+    });
 
-        setOnlineError(
-          "Opponent left the room"
-        );
-      }
-    );
+    setOnlineError("");
+  }
+);
 
-    const cleanupDisconnected = on(
-      "opponent_disconnected",
-      () => {
-        setOnlineError(
-          "Opponent disconnected"
-        );
-      }
-    );
+    const cleanupOpponentResult = on(
+  "opponent_game_result",
+  ({ result }) => {
+    if (!result) return;
+
+    setGameResult(result);
+  }
+);
+
+    const cleanupOpponentDisconnected = on(
+  "opponent_disconnected",
+  ({ winner, winnerId } = {}) => {
+    setOnlineOpponent(null);
+
+    setGameResult({
+      type: "opponent_disconnected",
+      winner:
+        winner === "white"
+          ? "White"
+          : "Black",
+      winnerColor: winner,
+      winnerId,
+      title: "You Win!",
+      message: "Your opponent disconnected.",
+    });
+
+    setOnlineError("");
+  }
+);
+
+
 
     return () => {
       cleanupRoom();
@@ -842,7 +873,8 @@ function ChessGame() {
       cleanupWaiting();
       cleanupError();
       cleanupOpponentLeft();
-      cleanupDisconnected();
+      cleanupOpponentDisconnected();
+      cleanupOpponentResult();
     };
   }, [
     mode,
@@ -1683,6 +1715,24 @@ function ChessGame() {
      RENDER
   ====================================================== */
 
+  const leaveOnlineGame = useCallback(() => {
+  if (mode !== "online") return;
+
+  emit("leave_room");
+
+  setOnlineRoomCode("");
+  setOnlineColor(null);
+  setOnlineOpponent(null);
+  setOnlineWaiting(false);
+  setOnlineStarted(false);
+  setOnlineError("");
+
+  setGameResult(null);
+  setShowPromotion(null);
+
+  resetGameForOnline();
+}, [mode, emit, resetGameForOnline]);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <GameHeader
@@ -1755,18 +1805,13 @@ function ChessGame() {
 
             {mode === "online" &&
               onlineStarted && (
-                <OnlineGameInfo
-                  user={user}
-                  onlineColor={
-                    onlineColor
-                  }
-                  onlineRoomCode={
-                    onlineRoomCode
-                  }
-                  onlineOpponent={
-                    onlineOpponent
-                  }
-                />
+<OnlineGameInfo
+  user={user}
+  onlineColor={onlineColor}
+  onlineRoomCode={onlineRoomCode}
+  onlineOpponent={onlineOpponent}
+  onLeaveGame={leaveOnlineGame}
+/>
               )}
 
             <ChessBoard
@@ -1831,28 +1876,30 @@ function ChessGame() {
       )}
 
       {gameResult && (
-        <GameModal
-          result={gameResult}
-          onRestart={resetGame}
-          onClose={() =>
-            setGameResult(null)
-          }
-        />
+<GameModal
+  type="gameover"
+  result={gameResult}
+  onRestart={() => {
+    if (mode === "online") {
+      setGameResult(null);
+      resetGameForOnline();
+      setOnlineStarted(false);
+      setOnlineOpponent(null);
+    } else {
+      resetGame();
+    }
+  }}
+  onClose={() => setGameResult(null)}
+/>
       )}
 
       {showPromotion && (
         <GameModal
-          promotion
-          color={
-            gameRef.current.turn()
-          }
-          onPromotion={
-            handlePromotion
-          }
-          onClose={() =>
-            setShowPromotion(null)
-          }
-        />
+  type="promotion"
+  color={gameRef.current.turn()}
+  onPromotion={handlePromotion}
+  onClose={() => setShowPromotion(null)}
+/>
       )}
     </div>
   );

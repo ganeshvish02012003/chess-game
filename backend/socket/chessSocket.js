@@ -71,27 +71,60 @@ const leaveRoom = (socket) => {
     return;
   }
 
+  // Find the player who is leaving
+  const leavingPlayer = room.players.get(socket.id);
+
+  // Find the remaining player BEFORE deleting the leaving player
+  const remainingPlayer = [...room.players.values()].find(
+    (player) => player.socketId !== socket.id
+  );
+
   room.players.delete(socket.id);
 
   socket.leave(roomCode);
   socket.data.roomCode = null;
 
+  // Nobody remains
   if (room.players.size === 0) {
     rooms.delete(roomCode);
     return;
   }
 
-  if (room.whitePlayerId === socket.data.userId) {
+  // Update player colors
+  if (
+    room.whitePlayerId ===
+    socket.data.userId
+  ) {
     room.whitePlayerId = null;
   }
 
-  if (room.blackPlayerId === socket.data.userId) {
+  if (
+    room.blackPlayerId ===
+    socket.data.userId
+  ) {
     room.blackPlayerId = null;
   }
 
   room.gameStarted = false;
 
-  socket.to(roomCode).emit("opponent_left");
+  // Remaining player automatically wins
+  if (remainingPlayer) {
+    socket.to(roomCode).emit(
+      "opponent_left",
+      {
+        winner: remainingPlayer.color,
+        winnerId: remainingPlayer.id,
+        reason: "opponent_left",
+        leavingPlayer: leavingPlayer
+          ? {
+              id: leavingPlayer.id,
+              username: leavingPlayer.username,
+              color: leavingPlayer.color,
+            }
+          : null,
+      }
+    );
+  }
 
   emitRoomState(io, roomCode);
 };
@@ -130,10 +163,13 @@ export const setupChessSocket = (serverIo) => {
       ).select("_id username email rating");
 
       if (!user) {
-        return next(new Error("User not found"));
+        return next(
+          new Error("User not found")
+        );
       }
 
-      socket.data.userId = user._id.toString();
+      socket.data.userId =
+        user._id.toString();
 
       socket.data.user = {
         id: user._id.toString(),
@@ -144,7 +180,11 @@ export const setupChessSocket = (serverIo) => {
 
       next();
     } catch (error) {
-      next(new Error("Invalid authentication"));
+      next(
+        new Error(
+          "Invalid authentication"
+        )
+      );
     }
   });
 
@@ -158,37 +198,55 @@ export const setupChessSocket = (serverIo) => {
       user: socket.data.user,
     });
 
-    socket.on("create_private_room", () => {
-      leaveRoom(socket);
+    // ---------------------------------------
+    // CREATE PRIVATE ROOM
+    // ---------------------------------------
 
-      const roomCode = createRoom();
+    socket.on(
+      "create_private_room",
+      () => {
+        leaveRoom(socket);
 
-      const room = {
-        roomCode,
-        hostId: socket.data.userId,
-        players: new Map(),
-        whitePlayerId: socket.data.userId,
-        blackPlayerId: null,
-        gameStarted: false,
-        fen: "start",
-        history: [],
-      };
+        const roomCode = createRoom();
 
-      room.players.set(socket.id, {
-        id: socket.data.userId,
-        socketId: socket.id,
-        username: socket.data.user.username,
-        rating: socket.data.user.rating,
-        color: "white",
-      });
+        const room = {
+          roomCode,
+          hostId: socket.data.userId,
+          players: new Map(),
+          whitePlayerId:
+            socket.data.userId,
+          blackPlayerId: null,
+          gameStarted: false,
+          fen: "start",
+          history: [],
+        };
 
-      rooms.set(roomCode, room);
+        room.players.set(socket.id, {
+          id: socket.data.userId,
+          socketId: socket.id,
+          username:
+            socket.data.user.username,
+          rating:
+            socket.data.user.rating,
+          color: "white",
+        });
 
-      socket.join(roomCode);
-      socket.data.roomCode = roomCode;
+        rooms.set(roomCode, room);
 
-      emitRoomState(io, roomCode);
-    });
+        socket.join(roomCode);
+        socket.data.roomCode =
+          roomCode;
+
+        emitRoomState(
+          io,
+          roomCode
+        );
+      }
+    );
+
+    // ---------------------------------------
+    // JOIN PRIVATE ROOM
+    // ---------------------------------------
 
     socket.on(
       "join_private_room",
@@ -198,197 +256,295 @@ export const setupChessSocket = (serverIo) => {
             .trim()
             .toUpperCase();
 
-        const room = rooms.get(normalizedCode);
+        const room =
+          rooms.get(normalizedCode);
 
         if (!room) {
-          socket.emit("room_error", {
-            message: "Room not found",
-          });
+          socket.emit(
+            "room_error",
+            {
+              message:
+                "Room not found",
+            }
+          );
 
           return;
         }
 
         if (room.players.size >= 2) {
-          socket.emit("room_error", {
-            message: "Room is already full",
+          socket.emit(
+            "room_error",
+            {
+              message:
+                "Room is already full",
+            }
+          );
+
+          return;
+        }
+
+        if (
+          room.players.has(socket.id)
+        ) {
+          return;
+        }
+
+        room.players.set(
+          socket.id,
+          {
+            id: socket.data.userId,
+            socketId: socket.id,
+            username:
+              socket.data.user.username,
+            rating:
+              socket.data.user.rating,
+            color: "black",
+          }
+        );
+
+        room.blackPlayerId =
+          socket.data.userId;
+
+        room.gameStarted = true;
+
+        socket.join(normalizedCode);
+
+        socket.data.roomCode =
+          normalizedCode;
+
+        io.to(normalizedCode).emit(
+          "match_started",
+          {
+            roomCode:
+              normalizedCode,
+            whitePlayerId:
+              room.whitePlayerId,
+            blackPlayerId:
+              room.blackPlayerId,
+          }
+        );
+
+        emitRoomState(
+          io,
+          normalizedCode
+        );
+      }
+    );
+
+    // ---------------------------------------
+    // QUICK MATCH
+    // ---------------------------------------
+
+    socket.on(
+      "quick_match",
+      () => {
+        removeFromQueue(
+          socket.id
+        );
+
+        leaveRoom(socket);
+
+        const availableIndex =
+          quickMatchQueue.findIndex(
+            (item) =>
+              item.userId !==
+              socket.data.userId
+          );
+
+        if (
+          availableIndex === -1
+        ) {
+          quickMatchQueue.push({
+            socketId:
+              socket.id,
+            userId:
+              socket.data.userId,
+          });
+
+          socket.emit(
+            "quick_match_waiting"
+          );
+
+          return;
+        }
+
+        const opponent =
+          quickMatchQueue.splice(
+            availableIndex,
+            1
+          )[0];
+
+        const opponentSocket =
+          io.sockets.sockets.get(
+            opponent.socketId
+          );
+
+        if (!opponentSocket) {
+          socket.emit(
+            "quick_match_waiting"
+          );
+
+          quickMatchQueue.push({
+            socketId:
+              socket.id,
+            userId:
+              socket.data.userId,
           });
 
           return;
         }
 
-        if (room.players.has(socket.id)) {
-          return;
-        }
+        const roomCode =
+          createRoom();
 
-        room.players.set(socket.id, {
-          id: socket.data.userId,
-          socketId: socket.id,
-          username: socket.data.user.username,
-          rating: socket.data.user.rating,
-          color: "black",
-        });
+        const whiteFirst =
+          Math.random() >= 0.5;
 
-        room.blackPlayerId = socket.data.userId;
-        room.gameStarted = true;
+        const whiteSocket =
+          whiteFirst
+            ? socket
+            : opponentSocket;
 
-        socket.join(normalizedCode);
-        socket.data.roomCode = normalizedCode;
+        const blackSocket =
+          whiteFirst
+            ? opponentSocket
+            : socket;
 
-        io.to(normalizedCode).emit(
-          "match_started",
+        const room = {
+          roomCode,
+          hostId:
+            whiteSocket.data.userId,
+          players: new Map(),
+          whitePlayerId:
+            whiteSocket.data.userId,
+          blackPlayerId:
+            blackSocket.data.userId,
+          gameStarted: true,
+          fen: "start",
+          history: [],
+        };
+
+        room.players.set(
+          whiteSocket.id,
           {
-            roomCode: normalizedCode,
-            whitePlayerId: room.whitePlayerId,
-            blackPlayerId: room.blackPlayerId,
+            id:
+              whiteSocket.data
+                .userId,
+            socketId:
+              whiteSocket.id,
+            username:
+              whiteSocket.data
+                .user.username,
+            rating:
+              whiteSocket.data
+                .user.rating,
+            color: "white",
           }
         );
 
-        emitRoomState(io, normalizedCode);
+        room.players.set(
+          blackSocket.id,
+          {
+            id:
+              blackSocket.data
+                .userId,
+            socketId:
+              blackSocket.id,
+            username:
+              blackSocket.data
+                .user.username,
+            rating:
+              blackSocket.data
+                .user.rating,
+            color: "black",
+          }
+        );
+
+        rooms.set(
+          roomCode,
+          room
+        );
+
+        whiteSocket.join(
+          roomCode
+        );
+
+        blackSocket.join(
+          roomCode
+        );
+
+        whiteSocket.data.roomCode =
+          roomCode;
+
+        blackSocket.data.roomCode =
+          roomCode;
+
+        io.to(roomCode).emit(
+          "match_started",
+          {
+            roomCode,
+            whitePlayerId:
+              room.whitePlayerId,
+            blackPlayerId:
+              room.blackPlayerId,
+          }
+        );
+
+        emitRoomState(
+          io,
+          roomCode
+        );
       }
     );
 
-    socket.on("quick_match", () => {
-      removeFromQueue(socket.id);
-
-      leaveRoom(socket);
-
-      const availableIndex =
-        quickMatchQueue.findIndex(
-          (item) =>
-            item.userId !== socket.data.userId
-        );
-
-      if (availableIndex === -1) {
-        quickMatchQueue.push({
-          socketId: socket.id,
-          userId: socket.data.userId,
-        });
-
-        socket.emit("quick_match_waiting");
-
-        return;
-      }
-
-      const opponent =
-        quickMatchQueue.splice(
-          availableIndex,
-          1
-        )[0];
-
-      const opponentSocket =
-        io.sockets.sockets.get(
-          opponent.socketId
-        );
-
-      if (!opponentSocket) {
-        socket.emit("quick_match_waiting");
-
-        quickMatchQueue.push({
-          socketId: socket.id,
-          userId: socket.data.userId,
-        });
-
-        return;
-      }
-
-      const roomCode = createRoom();
-
-      const whiteFirst = Math.random() >= 0.5;
-
-      const whiteSocket = whiteFirst
-        ? socket
-        : opponentSocket;
-
-      const blackSocket = whiteFirst
-        ? opponentSocket
-        : socket;
-
-      const room = {
-        roomCode,
-        hostId: whiteSocket.data.userId,
-        players: new Map(),
-        whitePlayerId: whiteSocket.data.userId,
-        blackPlayerId: blackSocket.data.userId,
-        gameStarted: true,
-        fen: "start",
-        history: [],
-      };
-
-      room.players.set(
-        whiteSocket.id,
-        {
-          id: whiteSocket.data.userId,
-          socketId: whiteSocket.id,
-          username:
-            whiteSocket.data.user.username,
-          rating:
-            whiteSocket.data.user.rating,
-          color: "white",
-        }
-      );
-
-      room.players.set(
-        blackSocket.id,
-        {
-          id: blackSocket.data.userId,
-          socketId: blackSocket.id,
-          username:
-            blackSocket.data.user.username,
-          rating:
-            blackSocket.data.user.rating,
-          color: "black",
-        }
-      );
-
-      rooms.set(roomCode, room);
-
-      whiteSocket.join(roomCode);
-      blackSocket.join(roomCode);
-
-      whiteSocket.data.roomCode = roomCode;
-      blackSocket.data.roomCode = roomCode;
-
-      io.to(roomCode).emit(
-        "match_started",
-        {
-          roomCode,
-          whitePlayerId:
-            room.whitePlayerId,
-          blackPlayerId:
-            room.blackPlayerId,
-        }
-      );
-
-      emitRoomState(io, roomCode);
-    });
+    // ---------------------------------------
+    // ONLINE MOVE
+    // ---------------------------------------
 
     socket.on(
       "online_move",
-      ({ fen, history, move }) => {
+      ({
+        fen,
+        history,
+        move,
+      }) => {
         const roomCode =
           socket.data.roomCode;
 
-        const room = rooms.get(roomCode);
+        const room =
+          rooms.get(roomCode);
 
         if (!room) return;
 
-        if (!room.players.has(socket.id)) {
+        if (
+          !room.players.has(
+            socket.id
+          )
+        ) {
           return;
         }
 
         room.fen = fen;
-        room.history = history || [];
+        room.history =
+          history || [];
 
-        socket.to(roomCode).emit(
-          "opponent_move",
-          {
-            fen,
-            history: room.history,
-            move,
-          }
-        );
+        socket
+          .to(roomCode)
+          .emit(
+            "opponent_move",
+            {
+              fen,
+              history:
+                room.history,
+              move,
+            }
+          );
       }
     );
+
+    // ---------------------------------------
+    // ONLINE GAME RESULT
+    // ---------------------------------------
 
     socket.on(
       "online_game_result",
@@ -398,50 +554,147 @@ export const setupChessSocket = (serverIo) => {
 
         if (!roomCode) return;
 
-        socket.to(roomCode).emit(
-          "opponent_game_result",
-          {
-            result,
-          }
-        );
+        const room =
+          rooms.get(roomCode);
+
+        if (!room) return;
+
+        if (
+          !room.players.has(
+            socket.id
+          )
+        ) {
+          return;
+        }
+
+        socket
+          .to(roomCode)
+          .emit(
+            "opponent_game_result",
+            {
+              result,
+            }
+          );
       }
     );
 
-    socket.on("leave_room", () => {
-      leaveRoom(socket);
-    });
+    // ---------------------------------------
+    // LEAVE ROOM
+    // ---------------------------------------
 
-    socket.on("disconnect", () => {
-      removeFromQueue(socket.id);
+    socket.on(
+      "leave_room",
+      () => {
+        leaveRoom(socket);
+      }
+    );
 
-      const roomCode =
-        socket.data.roomCode;
+    // ---------------------------------------
+    // DISCONNECT
+    // ---------------------------------------
 
-      if (roomCode) {
-        const room = rooms.get(roomCode);
+    socket.on(
+      "disconnect",
+      () => {
+        removeFromQueue(
+          socket.id
+        );
 
-        if (room) {
-          room.players.delete(socket.id);
+        const roomCode =
+          socket.data.roomCode;
 
-          if (room.players.size === 0) {
-            rooms.delete(roomCode);
-          } else {
-            socket.to(roomCode).emit(
-              "opponent_disconnected"
+        if (roomCode) {
+          const room =
+            rooms.get(roomCode);
+
+          if (room) {
+            const leavingPlayer =
+              room.players.get(
+                socket.id
+              );
+
+            const remainingPlayer =
+              [
+                ...room.players.values(),
+              ].find(
+                (player) =>
+                  player.socketId !==
+                  socket.id
+              );
+
+            room.players.delete(
+              socket.id
             );
 
-            emitRoomState(
-              io,
-              roomCode
-            );
+            if (
+              room.players.size ===
+              0
+            ) {
+              rooms.delete(
+                roomCode
+              );
+            } else {
+              room.gameStarted =
+                false;
+
+              if (
+                room.whitePlayerId ===
+                socket.data.userId
+              ) {
+                room.whitePlayerId =
+                  null;
+              }
+
+              if (
+                room.blackPlayerId ===
+                socket.data.userId
+              ) {
+                room.blackPlayerId =
+                  null;
+              }
+
+              if (remainingPlayer) {
+                socket
+                  .to(roomCode)
+                  .emit(
+                    "opponent_disconnected",
+                    {
+                      winner:
+                        remainingPlayer.color,
+                      winnerId:
+                        remainingPlayer.id,
+                      reason:
+                        "opponent_disconnected",
+                      leavingPlayer:
+                        leavingPlayer
+                          ? {
+                              id:
+                                leavingPlayer.id,
+                              username:
+                                leavingPlayer.username,
+                              color:
+                                leavingPlayer.color,
+                            }
+                          : null,
+                    }
+                  );
+              }
+
+              emitRoomState(
+                io,
+                roomCode
+              );
+            }
           }
         }
-      }
 
-      console.log(
-        "Chess socket disconnected:",
-        socket.data.user?.username
-      );
-    });
+        console.log(
+          "Chess socket disconnected:",
+          socket.data.user
+            ?.username
+        );
+      }
+    );
   });
 };
+
