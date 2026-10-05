@@ -12,10 +12,9 @@ import OnlineLobby from "../components/OnlineLobby";
 import { createStockfish } from "../stockfish/stockfish";
 import { useAuth } from "../context/AuthContext";
 import { useChessSocket } from "../hooks/useChessSocket";
+import { useNavigate } from "react-router-dom";
 
-const API_URL =
-  import.meta.env.VITE_BACKEND_DOMAIN ||
-  "http://localhost:8080";
+const API_URL = import.meta.env.VITE_BACKEND_DOMAIN || "http://localhost:8080";
 
 const INITIAL_TIME = 10 * 60;
 
@@ -50,6 +49,7 @@ const DIFFICULTY = {
 };
 
 function ChessGame() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   /* ======================================================
@@ -57,6 +57,15 @@ function ChessGame() {
   ====================================================== */
 
   const [mode, setMode] = useState("computer");
+
+  const handleOnlineMode = useCallback(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    setMode("online");
+  }, [navigate, user]);
 
   const socketEnabled = mode === "online";
 
@@ -121,11 +130,9 @@ function ChessGame() {
 
   const [thinking, setThinking] = useState(false);
 
-  const [backendStatus, setBackendStatus] =
-    useState("checking");
+  const [backendStatus, setBackendStatus] = useState("checking");
 
-  const [selectedSquare, setSelectedSquare] =
-    useState(null);
+  const [selectedSquare, setSelectedSquare] = useState(null);
 
   const [legalMoves, setLegalMoves] = useState([]);
 
@@ -133,14 +140,11 @@ function ChessGame() {
 
   const [gameResult, setGameResult] = useState(null);
 
-  const [showPromotion, setShowPromotion] =
-    useState(null);
+  const [showPromotion, setShowPromotion] = useState(null);
 
-  const [whiteTime, setWhiteTime] =
-    useState(INITIAL_TIME);
+  const [whiteTime, setWhiteTime] = useState(INITIAL_TIME);
 
-  const [blackTime, setBlackTime] =
-    useState(INITIAL_TIME);
+  const [blackTime, setBlackTime] = useState(INITIAL_TIME);
 
   /* ======================================================
      KEEP REFS IN SYNC
@@ -165,15 +169,13 @@ function ChessGame() {
   const soundsRef = useRef({});
 
   const preloadSounds = useCallback(() => {
-    Object.entries(SOUND_FILES).forEach(
-      ([name, src]) => {
-        const audio = new Audio(src);
+    Object.entries(SOUND_FILES).forEach(([name, src]) => {
+      const audio = new Audio(src);
 
-        audio.preload = "auto";
+      audio.preload = "auto";
 
-        soundsRef.current[name] = audio;
-      }
-    );
+      soundsRef.current[name] = audio;
+    });
   }, []);
 
   const playSound = useCallback(
@@ -196,7 +198,7 @@ function ChessGame() {
         // Ignore browser audio errors
       }
     },
-    [soundEnabled]
+    [soundEnabled],
   );
 
   useEffect(() => {
@@ -210,13 +212,9 @@ function ChessGame() {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/api/health`
-        );
+        const response = await fetch(`${API_URL}/api/health`);
 
-        setBackendStatus(
-          response.ok ? "online" : "offline"
-        );
+        setBackendStatus(response.ok ? "online" : "offline");
       } catch {
         setBackendStatus("offline");
       }
@@ -229,60 +227,42 @@ function ChessGame() {
      LAST MOVE
   ====================================================== */
 
-  const createLastMove = useCallback(
-    (move) => {
-      let rookFrom = null;
-      let rookTo = null;
+  const createLastMove = useCallback((move) => {
+    let rookFrom = null;
+    let rookTo = null;
 
-      const kingSide =
-        move.flags?.includes("k");
+    const kingSide = move.flags?.includes("k");
 
-      const queenSide =
-        move.flags?.includes("q");
+    const queenSide = move.flags?.includes("q");
 
-      if (kingSide) {
-        rookFrom =
-          move.color === "w"
-            ? "h1"
-            : "h8";
+    if (kingSide) {
+      rookFrom = move.color === "w" ? "h1" : "h8";
 
-        rookTo =
-          move.color === "w"
-            ? "f1"
-            : "f8";
-      }
+      rookTo = move.color === "w" ? "f1" : "f8";
+    }
 
-      if (queenSide) {
-        rookFrom =
-          move.color === "w"
-            ? "a1"
-            : "a8";
+    if (queenSide) {
+      rookFrom = move.color === "w" ? "a1" : "a8";
 
-        rookTo =
-          move.color === "w"
-            ? "d1"
-            : "d8";
-      }
+      rookTo = move.color === "w" ? "d1" : "d8";
+    }
 
-      return {
-        from: move.from,
-        to: move.to,
-        piece: move.piece,
-        color: move.color,
-        promotion: move.promotion || null,
-        captured: move.captured || null,
+    return {
+      from: move.from,
+      to: move.to,
+      piece: move.piece,
+      color: move.color,
+      promotion: move.promotion || null,
+      captured: move.captured || null,
 
-        castle:
-          kingSide || queenSide,
+      castle: kingSide || queenSide,
 
-        rookFrom,
-        rookTo,
+      rookFrom,
+      rookTo,
 
-        timestamp: Date.now(),
-      };
-    },
-    []
-  );
+      timestamp: Date.now(),
+    };
+  }, []);
 
   /* ======================================================
      SNAPSHOT
@@ -295,150 +275,105 @@ function ChessGame() {
       currentCaptured,
       currentLastMove,
       currentWhiteTime,
-      currentBlackTime
+      currentBlackTime,
     ) => {
       return {
         fen: currentGame.fen(),
 
-        history: currentHistory.map(
-          (move) => ({ ...move })
-        ),
+        history: currentHistory.map((move) => ({ ...move })),
 
         capturedPieces: {
-          white: [
-            ...(currentCaptured?.white || []),
-          ],
+          white: [...(currentCaptured?.white || [])],
 
-          black: [
-            ...(currentCaptured?.black || []),
-          ],
+          black: [...(currentCaptured?.black || [])],
         },
 
         whiteTime: currentWhiteTime,
 
         blackTime: currentBlackTime,
 
-        lastMove: currentLastMove
-          ? { ...currentLastMove }
-          : null,
+        lastMove: currentLastMove ? { ...currentLastMove } : null,
       };
     },
-    []
+    [],
   );
 
   const saveSnapshot = useCallback(
-    (
-      currentGame,
-      currentHistory,
-      currentCaptured,
-      currentLastMove
-    ) => {
-      const snapshot =
-        createSnapshot(
-          currentGame,
-          currentHistory,
-          currentCaptured,
-          currentLastMove,
-          whiteTimeRef.current,
-          blackTimeRef.current
-        );
+    (currentGame, currentHistory, currentCaptured, currentLastMove) => {
+      const snapshot = createSnapshot(
+        currentGame,
+        currentHistory,
+        currentCaptured,
+        currentLastMove,
+        whiteTimeRef.current,
+        blackTimeRef.current,
+      );
 
       snapshotsRef.current.push(snapshot);
     },
-    [createSnapshot]
+    [createSnapshot],
   );
 
   /* ======================================================
      RESTORE SNAPSHOT
   ====================================================== */
 
-  const restoreSnapshot = useCallback(
-    (snapshot, animate = true) => {
-      if (!snapshot) return;
+  const restoreSnapshot = useCallback((snapshot, animate = true) => {
+    if (!snapshot) return;
 
-      const restoredGame =
-        new Chess(snapshot.fen);
+    const restoredGame = new Chess(snapshot.fen);
 
-      gameRef.current =
-        restoredGame;
+    gameRef.current = restoredGame;
 
-      setGame(
-        new Chess(snapshot.fen)
-      );
+    setGame(new Chess(snapshot.fen));
 
-      setHistory(
-        snapshot.history.map(
-          (move) => ({ ...move })
-        )
-      );
+    setHistory(snapshot.history.map((move) => ({ ...move })));
 
-      const restoredCaptured = {
-        white: [
-          ...(snapshot.capturedPieces
-            ?.white || []),
-        ],
+    const restoredCaptured = {
+      white: [...(snapshot.capturedPieces?.white || [])],
 
-        black: [
-          ...(snapshot.capturedPieces
-            ?.black || []),
-        ],
-      };
+      black: [...(snapshot.capturedPieces?.black || [])],
+    };
 
-      capturedPiecesRef.current =
-        restoredCaptured;
+    capturedPiecesRef.current = restoredCaptured;
 
-      setCapturedPieces(
-        restoredCaptured
-      );
+    setCapturedPieces(restoredCaptured);
 
-      whiteTimeRef.current =
-        snapshot.whiteTime;
+    whiteTimeRef.current = snapshot.whiteTime;
 
-      blackTimeRef.current =
-        snapshot.blackTime;
+    blackTimeRef.current = snapshot.blackTime;
 
-      setWhiteTime(
-        snapshot.whiteTime
-      );
+    setWhiteTime(snapshot.whiteTime);
 
-      setBlackTime(
-        snapshot.blackTime
-      );
+    setBlackTime(snapshot.blackTime);
 
-      setLastMove(
-        snapshot.lastMove
-          ? {
-              ...snapshot.lastMove,
+    setLastMove(
+      snapshot.lastMove
+        ? {
+            ...snapshot.lastMove,
 
-              timestamp: animate
-                ? Date.now()
-                : snapshot.lastMove
-                    .timestamp,
-            }
-          : null
-      );
+            timestamp: animate ? Date.now() : snapshot.lastMove.timestamp,
+          }
+        : null,
+    );
 
-      setSelectedSquare(null);
+    setSelectedSquare(null);
 
-      setLegalMoves([]);
+    setLegalMoves([]);
 
-      setShowPromotion(null);
+    setShowPromotion(null);
 
-      setGameResult(null);
+    setGameResult(null);
 
-      setThinking(false);
-    },
-    []
-  );
+    setThinking(false);
+  }, []);
 
   /* ======================================================
      INITIAL SNAPSHOT
   ====================================================== */
 
   useEffect(() => {
-    if (
-      snapshotsRef.current.length === 0
-    ) {
+    if (snapshotsRef.current.length === 0) {
       snapshotsRef.current = [
         createSnapshot(
           gameRef.current,
@@ -449,7 +384,7 @@ function ChessGame() {
           },
           null,
           INITIAL_TIME,
-          INITIAL_TIME
+          INITIAL_TIME,
         ),
       ];
     }
@@ -462,10 +397,7 @@ function ChessGame() {
   const detectGameResult = useCallback(
     (currentGame) => {
       if (currentGame.isCheckmate()) {
-        const winner =
-          currentGame.turn() === "w"
-            ? "Black"
-            : "White";
+        const winner = currentGame.turn() === "w" ? "Black" : "White";
 
         setGameResult({
           type: "checkmate",
@@ -485,9 +417,7 @@ function ChessGame() {
         return;
       }
 
-      if (
-        currentGame.isThreefoldRepetition()
-      ) {
+      if (currentGame.isThreefoldRepetition()) {
         setGameResult({
           type: "threefold",
         });
@@ -495,9 +425,7 @@ function ChessGame() {
         return;
       }
 
-      if (
-        currentGame.isInsufficientMaterial()
-      ) {
+      if (currentGame.isInsufficientMaterial()) {
         setGameResult({
           type: "insufficient",
         });
@@ -517,7 +445,7 @@ function ChessGame() {
         playSound("check");
       }
     },
-    [playSound]
+    [playSound],
   );
 
   /* ======================================================
@@ -526,52 +454,35 @@ function ChessGame() {
 
   const finishMove = useCallback(
     (move) => {
-      const currentGame =
-        gameRef.current;
+      const currentGame = gameRef.current;
 
-      const newLastMove =
-        createLastMove(move);
+      const newLastMove = createLastMove(move);
 
-      const newHistory =
-        currentGame.history({
-          verbose: true,
-        });
+      const newHistory = currentGame.history({
+        verbose: true,
+      });
 
-      const previousCaptured =
-        capturedPiecesRef.current;
+      const previousCaptured = capturedPiecesRef.current;
 
       const newCaptured = {
-        white: [
-          ...previousCaptured.white,
-        ],
+        white: [...previousCaptured.white],
 
-        black: [
-          ...previousCaptured.black,
-        ],
+        black: [...previousCaptured.black],
       };
 
       if (move.captured) {
         if (move.color === "w") {
-          newCaptured.white.push(
-            move.captured
-          );
+          newCaptured.white.push(move.captured);
         } else {
-          newCaptured.black.push(
-            move.captured
-          );
+          newCaptured.black.push(move.captured);
         }
       }
 
-      capturedPiecesRef.current =
-        newCaptured;
+      capturedPiecesRef.current = newCaptured;
 
-      setCapturedPieces(
-        newCaptured
-      );
+      setCapturedPieces(newCaptured);
 
-      setGame(
-        new Chess(currentGame.fen())
-      );
+      setGame(new Chess(currentGame.fen()));
 
       setHistory(newHistory);
 
@@ -581,17 +492,9 @@ function ChessGame() {
 
       setLegalMoves([]);
 
-      saveSnapshot(
-        currentGame,
-        newHistory,
-        newCaptured,
-        newLastMove
-      );
+      saveSnapshot(currentGame, newHistory, newCaptured, newLastMove);
 
-      if (
-        move.flags?.includes("k") ||
-        move.flags?.includes("q")
-      ) {
+      if (move.flags?.includes("k") || move.flags?.includes("q")) {
         playSound("castle");
       } else if (move.promotion) {
         playSound("promotion");
@@ -601,9 +504,7 @@ function ChessGame() {
         playSound("move");
       }
 
-      detectGameResult(
-        currentGame
-      );
+      detectGameResult(currentGame);
 
       /*
        * ONLINE MOVE
@@ -619,14 +520,7 @@ function ChessGame() {
         });
       }
     },
-    [
-      createLastMove,
-      detectGameResult,
-      emit,
-      mode,
-      playSound,
-      saveSnapshot,
-    ]
+    [createLastMove, detectGameResult, emit, mode, playSound, saveSnapshot],
   );
 
   /* ======================================================
@@ -647,7 +541,7 @@ function ChessGame() {
         roomCode,
       });
     },
-    [emit]
+    [emit],
   );
 
   const startQuickMatch = useCallback(() => {
@@ -668,9 +562,7 @@ function ChessGame() {
     aiMovePendingRef.current = false;
 
     if (stockfishRef.current) {
-      stockfishRef.current.postMessage(
-        "stop"
-      );
+      stockfishRef.current.postMessage("stop");
     }
 
     const newGame = new Chess();
@@ -682,24 +574,17 @@ function ChessGame() {
       black: [],
     };
 
-    capturedPiecesRef.current =
-      emptyCaptured;
+    capturedPiecesRef.current = emptyCaptured;
 
-    whiteTimeRef.current =
-      INITIAL_TIME;
+    whiteTimeRef.current = INITIAL_TIME;
 
-    blackTimeRef.current =
-      INITIAL_TIME;
+    blackTimeRef.current = INITIAL_TIME;
 
-    setGame(
-      new Chess(newGame.fen())
-    );
+    setGame(new Chess(newGame.fen()));
 
     setHistory([]);
 
-    setCapturedPieces(
-      emptyCaptured
-    );
+    setCapturedPieces(emptyCaptured);
 
     setSelectedSquare(null);
 
@@ -724,7 +609,7 @@ function ChessGame() {
         emptyCaptured,
         null,
         INITIAL_TIME,
-        INITIAL_TIME
+        INITIAL_TIME,
       ),
     ];
   }, [createSnapshot]);
@@ -734,138 +619,93 @@ function ChessGame() {
   ====================================================== */
 
   useEffect(() => {
-    if (mode !== "online") {
+    // Online mode nahi hai ya user logged in nahi hai
+    if (mode !== "online" || !user) {
       return;
     }
 
-    const cleanupRoom = on(
-      "room_state",
-      (data) => {
-        setOnlineRoomCode(
-          data.roomCode
-        );
+    const cleanupRoom = on("room_state", (data) => {
+      setOnlineRoomCode(data.roomCode);
 
-        const me =
-          data.players.find(
-            (player) =>
-              player.id === user.id
-          );
+      const me = data.players.find((player) => player.id === user.id);
 
-        const opponent =
-          data.players.find(
-            (player) =>
-              player.id !== user.id
-          );
+      const opponent = data.players.find((player) => player.id !== user.id);
 
-        setOnlineColor(
-          me?.color || null
-        );
+      setOnlineColor(me?.color || null);
 
-        setOnlineOpponent(
-          opponent || null
-        );
+      setOnlineOpponent(opponent || null);
 
-        setOnlineStarted(
-          data.gameStarted
-        );
+      setOnlineStarted(data.gameStarted);
 
-        if (data.gameStarted) {
-          setOnlineWaiting(false);
-        }
-      }
-    );
-
-    const cleanupStarted = on(
-      "match_started",
-      (data) => {
-        setOnlineRoomCode(
-          data.roomCode
-        );
-
-        setOnlineWaiting(false);
-
-        const color =
-          data.whitePlayerId ===
-          user.id
-            ? "white"
-            : "black";
-
-        setOnlineColor(color);
-
-        setOnlineStarted(true);
-
-        resetGameForOnline();
-      }
-    );
-
-    const cleanupWaiting = on(
-      "quick_match_waiting",
-      () => {
-        setOnlineWaiting(true);
-      }
-    );
-
-    const cleanupError = on(
-      "room_error",
-      ({ message }) => {
-        setOnlineError(message);
-
+      if (data.gameStarted) {
         setOnlineWaiting(false);
       }
-    );
-
-const cleanupOpponentLeft = on(
-  "opponent_left",
-  ({ winner, winnerId } = {}) => {
-    setOnlineOpponent(null);
-
-    setGameResult({
-      type: "opponent_left",
-      winner:
-        winner === "white"
-          ? "White"
-          : "Black",
-      winnerColor: winner,
-      winnerId,
-      title: "You Win!",
-      message: "Your opponent left the game.",
     });
 
-    setOnlineError("");
-  }
-);
+    const cleanupStarted = on("match_started", (data) => {
+      setOnlineRoomCode(data.roomCode);
 
-    const cleanupOpponentResult = on(
-  "opponent_game_result",
-  ({ result }) => {
-    if (!result) return;
+      setOnlineWaiting(false);
 
-    setGameResult(result);
-  }
-);
+      const color = data.whitePlayerId === user.id ? "white" : "black";
+
+      setOnlineColor(color);
+
+      setOnlineStarted(true);
+
+      resetGameForOnline();
+    });
+
+    const cleanupWaiting = on("quick_match_waiting", () => {
+      setOnlineWaiting(true);
+    });
+
+    const cleanupError = on("room_error", ({ message }) => {
+      setOnlineError(message);
+      setOnlineWaiting(false);
+    });
+
+    const cleanupOpponentLeft = on(
+      "opponent_left",
+      ({ winner, winnerId } = {}) => {
+        setOnlineOpponent(null);
+
+        setGameResult({
+          type: "opponent_left",
+          winner: winner === "white" ? "White" : "Black",
+          winnerColor: winner,
+          winnerId,
+          title: "You Win!",
+          message: "Your opponent left the game.",
+        });
+
+        setOnlineError("");
+      },
+    );
+
+    const cleanupOpponentResult = on("opponent_game_result", ({ result }) => {
+      if (!result) return;
+
+      setGameResult(result);
+    });
 
     const cleanupOpponentDisconnected = on(
-  "opponent_disconnected",
-  ({ winner, winnerId } = {}) => {
-    setOnlineOpponent(null);
+      "opponent_disconnected",
+      ({ winner, winnerId } = {}) => {
+        setOnlineOpponent(null);
 
-    setGameResult({
-      type: "opponent_disconnected",
-      winner:
-        winner === "white"
-          ? "White"
-          : "Black",
-      winnerColor: winner,
-      winnerId,
-      title: "You Win!",
-      message: "Your opponent disconnected.",
-    });
+        setGameResult({
+          type: "opponent_disconnected",
+          winner: winner === "white" ? "White" : "Black",
+          winnerColor: winner,
+          winnerId,
+          title: "You Win!",
+          message: "Your opponent disconnected.",
+        });
 
-    setOnlineError("");
-  }
-);
-
-
+        setOnlineError("");
+      },
+    );
 
     return () => {
       cleanupRoom();
@@ -876,113 +716,65 @@ const cleanupOpponentLeft = on(
       cleanupOpponentDisconnected();
       cleanupOpponentResult();
     };
-  }, [
-    mode,
-    on,
-    resetGameForOnline,
-    user.id,
-  ]);
+  }, [mode, on, resetGameForOnline, user?.id]);
 
   /* ======================================================
      OPPONENT MOVE
   ====================================================== */
 
   useEffect(() => {
-    if (
-      mode !== "online" ||
-      !onlineStarted
-    ) {
+    if (mode !== "online" || !onlineStarted) {
       return;
     }
 
-    return on(
-      "opponent_move",
-      ({
-        fen,
-        history: remoteHistory,
-        move,
-      }) => {
-        const remoteGame =
-          new Chess(fen);
+    return on("opponent_move", ({ fen, history: remoteHistory, move }) => {
+      const remoteGame = new Chess(fen);
 
-        gameRef.current =
-          remoteGame;
+      gameRef.current = remoteGame;
 
-        setGame(
-          new Chess(
-            remoteGame.fen()
-          )
-        );
+      setGame(new Chess(remoteGame.fen()));
 
-        setHistory(
-          remoteHistory || []
-        );
+      setHistory(remoteHistory || []);
 
-        setLastMove(
-          move || null
-        );
+      setLastMove(move || null);
 
-        setSelectedSquare(null);
+      setSelectedSquare(null);
 
-        setLegalMoves([]);
+      setLegalMoves([]);
 
-        if (move?.captured) {
-          const previous =
-            capturedPiecesRef.current;
+      if (move?.captured) {
+        const previous = capturedPiecesRef.current;
 
-          const updated = {
-            white: [
-              ...previous.white,
-            ],
+        const updated = {
+          white: [...previous.white],
 
-            black: [
-              ...previous.black,
-            ],
-          };
+          black: [...previous.black],
+        };
 
-          if (move.color === "w") {
-            updated.black.push(
-              move.captured
-            );
-          } else {
-            updated.white.push(
-              move.captured
-            );
-          }
-
-          capturedPiecesRef.current =
-            updated;
-
-          setCapturedPieces(
-            updated
-          );
-        }
-
-        if (
-          move?.flags?.includes("k") ||
-          move?.flags?.includes("q")
-        ) {
-          playSound("castle");
-        } else if (move?.promotion) {
-          playSound("promotion");
-        } else if (move?.captured) {
-          playSound("capture");
+        if (move.color === "w") {
+          updated.black.push(move.captured);
         } else {
-          playSound("move");
+          updated.white.push(move.captured);
         }
 
-        detectGameResult(
-          remoteGame
-        );
+        capturedPiecesRef.current = updated;
+
+        setCapturedPieces(updated);
       }
-    );
-  }, [
-    mode,
-    onlineStarted,
-    on,
-    playSound,
-    detectGameResult,
-  ]);
+
+      if (move?.flags?.includes("k") || move?.flags?.includes("q")) {
+        playSound("castle");
+      } else if (move?.promotion) {
+        playSound("promotion");
+      } else if (move?.captured) {
+        playSound("capture");
+      } else {
+        playSound("move");
+      }
+
+      detectGameResult(remoteGame);
+    });
+  }, [mode, onlineStarted, on, playSound, detectGameResult]);
 
   /* ======================================================
      STOCKFISH
@@ -998,117 +790,74 @@ const cleanupOpponentLeft = on(
 
       setThinking(false);
 
-      aiMovePendingRef.current =
-        false;
+      aiMovePendingRef.current = false;
 
       return;
     }
 
-    const worker =
-      createStockfish();
+    const worker = createStockfish();
 
-    stockfishRef.current =
-      worker;
+    stockfishRef.current = worker;
 
     worker.onmessage = (event) => {
-      const message = String(
-        event.data || ""
-      );
+      const message = String(event.data || "");
 
-      if (
-        !message.startsWith(
-          "bestmove"
-        )
-      ) {
+      if (!message.startsWith("bestmove")) {
         return;
       }
 
-      const requestId =
-        Number(
-          worker.__requestId
-        );
+      const requestId = Number(worker.__requestId);
 
-      if (
-        requestId !==
-        aiRequestIdRef.current
-      ) {
+      if (requestId !== aiRequestIdRef.current) {
         return;
       }
 
-      if (
-        skipNextAiRef.current
-      ) {
+      if (skipNextAiRef.current) {
         return;
       }
 
-      const parts =
-        message.split(" ");
+      const parts = message.split(" ");
 
-      const bestMove =
-        parts[1];
+      const bestMove = parts[1];
 
-      if (
-        !bestMove ||
-        bestMove === "(none)"
-      ) {
+      if (!bestMove || bestMove === "(none)") {
         setThinking(false);
 
-        aiMovePendingRef.current =
-          false;
+        aiMovePendingRef.current = false;
 
         return;
       }
 
-      const from =
-        bestMove.substring(
-          0,
-          2
-        );
+      const from = bestMove.substring(0, 2);
 
-      const to =
-        bestMove.substring(
-          2,
-          4
-        );
+      const to = bestMove.substring(2, 4);
 
-      const promotion =
-        bestMove.substring(
-          4,
-          5
-        );
+      const promotion = bestMove.substring(4, 5);
 
-      const thisRequestId =
-        requestId;
+      const thisRequestId = requestId;
 
       setTimeout(() => {
-        if (
-          thisRequestId !==
-          aiRequestIdRef.current
-        ) {
+        if (thisRequestId !== aiRequestIdRef.current) {
           return;
         }
 
-        if (
-          skipNextAiRef.current
-        ) {
+        if (skipNextAiRef.current) {
           return;
         }
 
-        const currentGame =
-          gameRef.current;
+        const currentGame = gameRef.current;
 
         try {
-          const move =
-            currentGame.move({
-              from,
-              to,
+          const move = currentGame.move({
+            from,
+            to,
 
-              ...(promotion
-                ? {
-                    promotion,
-                  }
-                : {}),
-            });
+            ...(promotion
+              ? {
+                  promotion,
+                }
+              : {}),
+          });
 
           if (move) {
             finishMove(move);
@@ -1119,22 +868,18 @@ const cleanupOpponentLeft = on(
 
         setThinking(false);
 
-        aiMovePendingRef.current =
-          false;
+        aiMovePendingRef.current = false;
       }, 150);
     };
 
     worker.postMessage("uci");
 
-    worker.postMessage(
-      "isready"
-    );
+    worker.postMessage("isready");
 
     return () => {
       worker.terminate();
 
-      stockfishRef.current =
-        null;
+      stockfishRef.current = null;
     };
   }, [mode, finishMove]);
 
@@ -1155,90 +900,56 @@ const cleanupOpponentLeft = on(
       return;
     }
 
-    if (
-      aiMovePendingRef.current
-    ) {
+    if (aiMovePendingRef.current) {
       return;
     }
 
     if (skipNextAiRef.current) {
-      skipNextAiRef.current =
-        false;
+      skipNextAiRef.current = false;
 
       return;
     }
 
-    const currentGame =
-      gameRef.current;
+    const currentGame = gameRef.current;
 
-    const aiColor =
-      playerColor === "white"
-        ? "b"
-        : "w";
+    const aiColor = playerColor === "white" ? "b" : "w";
 
-    if (
-      currentGame.turn() !==
-      aiColor
-    ) {
+    if (currentGame.turn() !== aiColor) {
       return;
     }
 
-    if (
-      currentGame.isGameOver()
-    ) {
+    if (currentGame.isGameOver()) {
       return;
     }
 
-    const worker =
-      stockfishRef.current;
+    const worker = stockfishRef.current;
 
     if (!worker) {
       return;
     }
 
-    const config =
-      DIFFICULTY[difficulty];
+    const config = DIFFICULTY[difficulty];
 
     aiRequestIdRef.current += 1;
 
-    const requestId =
-      aiRequestIdRef.current;
+    const requestId = aiRequestIdRef.current;
 
-    worker.__requestId =
-      requestId;
+    worker.__requestId = requestId;
 
-    aiMovePendingRef.current =
-      true;
+    aiMovePendingRef.current = true;
 
     setThinking(true);
 
-    worker.postMessage(
-      "ucinewgame"
-    );
+    worker.postMessage("ucinewgame");
 
-    worker.postMessage(
-      "isready"
-    );
+    worker.postMessage("isready");
 
-    worker.postMessage(
-      `setoption name Skill Level value ${config.skill}`
-    );
+    worker.postMessage(`setoption name Skill Level value ${config.skill}`);
 
-    worker.postMessage(
-      `position fen ${currentGame.fen()}`
-    );
+    worker.postMessage(`position fen ${currentGame.fen()}`);
 
-    worker.postMessage(
-      `go depth ${config.depth} movetime ${config.moveTime}`
-    );
-  }, [
-    mode,
-    playerColor,
-    difficulty,
-    game,
-    thinking,
-    gameResult,
-  ]);
+    worker.postMessage(`go depth ${config.depth} movetime ${config.moveTime}`);
+  }, [mode, playerColor, difficulty, game, thinking, gameResult]);
 
   /* ======================================================
      TIMER
@@ -1249,466 +960,326 @@ const cleanupOpponentLeft = on(
 
     if (thinking) return;
 
-    const timer =
-      setInterval(() => {
-        const currentTurn =
-          gameRef.current.turn();
+    const timer = setInterval(() => {
+      const currentTurn = gameRef.current.turn();
 
-        if (currentTurn === "w") {
-          setWhiteTime(
-            (previous) => {
-              const next =
-                Math.max(
-                  0,
-                  previous - 1
-                );
+      if (currentTurn === "w") {
+        setWhiteTime((previous) => {
+          const next = Math.max(0, previous - 1);
 
-              whiteTimeRef.current =
-                next;
+          whiteTimeRef.current = next;
 
-              if (next === 0) {
-                clearInterval(timer);
+          if (next === 0) {
+            clearInterval(timer);
 
-                setGameResult({
-                  type: "timeout",
-                  winner: "Black",
-                });
-              }
+            setGameResult({
+              type: "timeout",
+              winner: "Black",
+            });
+          }
 
-              return next;
-            }
-          );
-        } else {
-          setBlackTime(
-            (previous) => {
-              const next =
-                Math.max(
-                  0,
-                  previous - 1
-                );
+          return next;
+        });
+      } else {
+        setBlackTime((previous) => {
+          const next = Math.max(0, previous - 1);
 
-              blackTimeRef.current =
-                next;
+          blackTimeRef.current = next;
 
-              if (next === 0) {
-                clearInterval(timer);
+          if (next === 0) {
+            clearInterval(timer);
 
-                setGameResult({
-                  type: "timeout",
-                  winner: "White",
-                });
-              }
+            setGameResult({
+              type: "timeout",
+              winner: "White",
+            });
+          }
 
-              return next;
-            }
-          );
-        }
-      }, 1000);
+          return next;
+        });
+      }
+    }, 1000);
 
     return () => {
       clearInterval(timer);
     };
-  }, [
-    game,
-    thinking,
-    gameResult,
-  ]);
+  }, [game, thinking, gameResult]);
 
   /* ======================================================
      HUMAN MOVE
   ====================================================== */
 
-  const handleSquareClick =
-    useCallback(
-      (square) => {
-        if (gameResult) return;
+  const handleSquareClick = useCallback(
+    (square) => {
+      if (gameResult) return;
 
-        if (thinking) return;
+      if (thinking) return;
 
-        const currentGame =
-          gameRef.current;
+      const currentGame = gameRef.current;
 
-        /*
-         * Computer turn protection
-         */
-        if (
-          mode === "computer" &&
-          currentGame.turn() !==
-            (playerColor ===
-            "white"
-              ? "w"
-              : "b")
-        ) {
-          return;
-        }
-
-        /*
-         * Online turn protection
-         */
-        if (mode === "online") {
-          const currentTurn =
-            currentGame.turn();
-
-          const myTurn =
-            (onlineColor ===
-              "white" &&
-              currentTurn === "w") ||
-            (onlineColor ===
-              "black" &&
-              currentTurn === "b");
-
-          if (!myTurn) {
-            return;
-          }
-        }
-
-        const clickedPiece =
-          currentGame.get(square);
-
-        if (!selectedSquare) {
-          if (
-            clickedPiece &&
-            clickedPiece.color ===
-              currentGame.turn()
-          ) {
-            setSelectedSquare(
-              square
-            );
-
-            const moves =
-              currentGame.moves({
-                square,
-                verbose: true,
-              });
-
-            setLegalMoves(
-              moves.map(
-                (move) =>
-                  move.to
-              )
-            );
-          }
-
-          return;
-        }
-
-        if (
-          clickedPiece &&
-          clickedPiece.color ===
-            currentGame.turn()
-        ) {
-          setSelectedSquare(
-            square
-          );
-
-          const moves =
-            currentGame.moves({
-              square,
-              verbose: true,
-            });
-
-          setLegalMoves(
-            moves.map(
-              (move) =>
-                move.to
-            )
-          );
-
-          return;
-        }
-
-        if (
-          !legalMoves.includes(
-            square
-          )
-        ) {
-          setSelectedSquare(null);
-
-          setLegalMoves([]);
-
-          return;
-        }
-
-        const selectedPiece =
-          currentGame.get(
-            selectedSquare
-          );
-
-        if (
-          selectedPiece?.type ===
-            "p" &&
-          ((selectedPiece.color ===
-            "w" &&
-            square[1] === "8") ||
-            (selectedPiece.color ===
-              "b" &&
-              square[1] === "1"))
-        ) {
-          setShowPromotion({
-            from: selectedSquare,
-            to: square,
-          });
-
-          return;
-        }
-
-        try {
-          const move =
-            currentGame.move({
-              from: selectedSquare,
-              to: square,
-            });
-
-          if (move) {
-            finishMove(move);
-          }
-        } catch {
-          setSelectedSquare(null);
-
-          setLegalMoves([]);
-        }
-      },
-      [
-        finishMove,
-        gameResult,
-        legalMoves,
-        mode,
-        onlineColor,
-        playerColor,
-        selectedSquare,
-        thinking,
-      ]
-    );
-
-  /* ======================================================
-     PROMOTION
-  ====================================================== */
-
-  const handlePromotion =
-    useCallback(
-      (piece) => {
-        if (!showPromotion) {
-          return;
-        }
-
-        const currentGame =
-          gameRef.current;
-
-        try {
-          const move =
-            currentGame.move({
-              from:
-                showPromotion.from,
-
-              to:
-                showPromotion.to,
-
-              promotion: piece,
-            });
-
-          if (move) {
-            finishMove(move);
-          }
-        } catch {
-          // Ignore
-        }
-
-        setShowPromotion(null);
-      },
-      [finishMove, showPromotion]
-    );
-
-  /* ======================================================
-     RESET
-  ====================================================== */
-
-  const resetGame =
-    useCallback(() => {
-      aiRequestIdRef.current += 1;
-
-      skipNextAiRef.current =
-        false;
-
-      aiMovePendingRef.current =
-        false;
-
-      if (stockfishRef.current) {
-        stockfishRef.current.postMessage(
-          "stop"
-        );
-      }
-
-      const newGame =
-        new Chess();
-
-      gameRef.current =
-        newGame;
-
-      const emptyCaptured = {
-        white: [],
-        black: [],
-      };
-
-      capturedPiecesRef.current =
-        emptyCaptured;
-
-      whiteTimeRef.current =
-        INITIAL_TIME;
-
-      blackTimeRef.current =
-        INITIAL_TIME;
-
-      setGame(
-        new Chess(
-          newGame.fen()
-        )
-      );
-
-      setHistory([]);
-
-      setCapturedPieces(
-        emptyCaptured
-      );
-
-      setSelectedSquare(null);
-
-      setLegalMoves([]);
-
-      setLastMove(null);
-
-      setGameResult(null);
-
-      setShowPromotion(null);
-
-      setWhiteTime(
-        INITIAL_TIME
-      );
-
-      setBlackTime(
-        INITIAL_TIME
-      );
-
-      setThinking(false);
-
-      snapshotsRef.current = [
-        createSnapshot(
-          newGame,
-          [],
-          emptyCaptured,
-          null,
-          INITIAL_TIME,
-          INITIAL_TIME
-        ),
-      ];
-
-      playSound("gameStart");
-    }, [
-      createSnapshot,
-      playSound,
-    ]);
-
-  /* ======================================================
-     UNDO
-  ====================================================== */
-
-  const undoMove =
-    useCallback(() => {
+      /*
+       * Computer turn protection
+       */
       if (
-        snapshotsRef.current
-          .length <= 1
+        mode === "computer" &&
+        currentGame.turn() !== (playerColor === "white" ? "w" : "b")
       ) {
         return;
       }
 
       /*
-       * Undo online game disable
+       * Online turn protection
        */
       if (mode === "online") {
+        const currentTurn = currentGame.turn();
+
+        const myTurn =
+          (onlineColor === "white" && currentTurn === "w") ||
+          (onlineColor === "black" && currentTurn === "b");
+
+        if (!myTurn) {
+          return;
+        }
+      }
+
+      const clickedPiece = currentGame.get(square);
+
+      if (!selectedSquare) {
+        if (clickedPiece && clickedPiece.color === currentGame.turn()) {
+          setSelectedSquare(square);
+
+          const moves = currentGame.moves({
+            square,
+            verbose: true,
+          });
+
+          setLegalMoves(moves.map((move) => move.to));
+        }
+
         return;
       }
 
-      aiRequestIdRef.current += 1;
+      if (clickedPiece && clickedPiece.color === currentGame.turn()) {
+        setSelectedSquare(square);
 
-      if (stockfishRef.current) {
-        stockfishRef.current.postMessage(
-          "stop"
-        );
-      }
+        const moves = currentGame.moves({
+          square,
+          verbose: true,
+        });
 
-      aiMovePendingRef.current =
-        false;
+        setLegalMoves(moves.map((move) => move.to));
 
-      setThinking(false);
-
-      const movesToUndo =
-        mode === "computer"
-          ? 2
-          : 1;
-
-      const currentIndex =
-        snapshotsRef.current
-          .length - 1;
-
-      const targetIndex =
-        Math.max(
-          0,
-          currentIndex -
-            movesToUndo
-        );
-
-      const targetSnapshot =
-        snapshotsRef.current[
-          targetIndex
-        ];
-
-      if (!targetSnapshot) {
         return;
       }
 
-      snapshotsRef.current =
-        snapshotsRef.current.slice(
-          0,
-          targetIndex + 1
-        );
+      if (!legalMoves.includes(square)) {
+        setSelectedSquare(null);
 
-      restoreSnapshot(
-        targetSnapshot,
-        true
-      );
+        setLegalMoves([]);
+
+        return;
+      }
+
+      const selectedPiece = currentGame.get(selectedSquare);
 
       if (
-        mode === "computer"
+        selectedPiece?.type === "p" &&
+        ((selectedPiece.color === "w" && square[1] === "8") ||
+          (selectedPiece.color === "b" && square[1] === "1"))
       ) {
-        skipNextAiRef.current =
-          true;
+        setShowPromotion({
+          from: selectedSquare,
+          to: square,
+        });
+
+        return;
       }
-    }, [
+
+      try {
+        const move = currentGame.move({
+          from: selectedSquare,
+          to: square,
+        });
+
+        if (move) {
+          finishMove(move);
+        }
+      } catch {
+        setSelectedSquare(null);
+
+        setLegalMoves([]);
+      }
+    },
+    [
+      finishMove,
+      gameResult,
+      legalMoves,
       mode,
-      restoreSnapshot,
-    ]);
+      onlineColor,
+      playerColor,
+      selectedSquare,
+      thinking,
+    ],
+  );
+
+  /* ======================================================
+     PROMOTION
+  ====================================================== */
+
+  const handlePromotion = useCallback(
+    (piece) => {
+      if (!showPromotion) {
+        return;
+      }
+
+      const currentGame = gameRef.current;
+
+      try {
+        const move = currentGame.move({
+          from: showPromotion.from,
+
+          to: showPromotion.to,
+
+          promotion: piece,
+        });
+
+        if (move) {
+          finishMove(move);
+        }
+      } catch {
+        // Ignore
+      }
+
+      setShowPromotion(null);
+    },
+    [finishMove, showPromotion],
+  );
+
+  /* ======================================================
+     RESET
+  ====================================================== */
+
+  const resetGame = useCallback(() => {
+    aiRequestIdRef.current += 1;
+
+    skipNextAiRef.current = false;
+
+    aiMovePendingRef.current = false;
+
+    if (stockfishRef.current) {
+      stockfishRef.current.postMessage("stop");
+    }
+
+    const newGame = new Chess();
+
+    gameRef.current = newGame;
+
+    const emptyCaptured = {
+      white: [],
+      black: [],
+    };
+
+    capturedPiecesRef.current = emptyCaptured;
+
+    whiteTimeRef.current = INITIAL_TIME;
+
+    blackTimeRef.current = INITIAL_TIME;
+
+    setGame(new Chess(newGame.fen()));
+
+    setHistory([]);
+
+    setCapturedPieces(emptyCaptured);
+
+    setSelectedSquare(null);
+
+    setLegalMoves([]);
+
+    setLastMove(null);
+
+    setGameResult(null);
+
+    setShowPromotion(null);
+
+    setWhiteTime(INITIAL_TIME);
+
+    setBlackTime(INITIAL_TIME);
+
+    setThinking(false);
+
+    snapshotsRef.current = [
+      createSnapshot(
+        newGame,
+        [],
+        emptyCaptured,
+        null,
+        INITIAL_TIME,
+        INITIAL_TIME,
+      ),
+    ];
+
+    playSound("gameStart");
+  }, [createSnapshot, playSound]);
+
+  /* ======================================================
+     UNDO
+  ====================================================== */
+
+  const undoMove = useCallback(() => {
+    if (snapshotsRef.current.length <= 1) {
+      return;
+    }
+
+    /*
+     * Undo online game disable
+     */
+    if (mode === "online") {
+      return;
+    }
+
+    aiRequestIdRef.current += 1;
+
+    if (stockfishRef.current) {
+      stockfishRef.current.postMessage("stop");
+    }
+
+    aiMovePendingRef.current = false;
+
+    setThinking(false);
+
+    const movesToUndo = mode === "computer" ? 2 : 1;
+
+    const currentIndex = snapshotsRef.current.length - 1;
+
+    const targetIndex = Math.max(0, currentIndex - movesToUndo);
+
+    const targetSnapshot = snapshotsRef.current[targetIndex];
+
+    if (!targetSnapshot) {
+      return;
+    }
+
+    snapshotsRef.current = snapshotsRef.current.slice(0, targetIndex + 1);
+
+    restoreSnapshot(targetSnapshot, true);
+
+    if (mode === "computer") {
+      skipNextAiRef.current = true;
+    }
+  }, [mode, restoreSnapshot]);
 
   /* ======================================================
      FORMAT TIME
   ====================================================== */
 
   const formatTime = (seconds) => {
-    const minutes =
-      Math.floor(seconds / 60);
+    const minutes = Math.floor(seconds / 60);
 
-    const remainingSeconds =
-      seconds % 60;
+    const remainingSeconds = seconds % 60;
 
-    return `${String(
-      minutes
-    ).padStart(
-      2,
-      "0"
-    )}:${String(
-      remainingSeconds
-    ).padStart(
-      2,
-      "0"
-    )}`;
+    return `${String(minutes).padStart(2, "0")}:${String(
+      remainingSeconds,
+    ).padStart(2, "0")}`;
   };
 
   /* ======================================================
@@ -1716,158 +1287,94 @@ const cleanupOpponentLeft = on(
   ====================================================== */
 
   const leaveOnlineGame = useCallback(() => {
-  if (mode !== "online") return;
+    if (mode !== "online") return;
 
-  emit("leave_room");
+    emit("leave_room");
 
-  setOnlineRoomCode("");
-  setOnlineColor(null);
-  setOnlineOpponent(null);
-  setOnlineWaiting(false);
-  setOnlineStarted(false);
-  setOnlineError("");
+    setOnlineRoomCode("");
+    setOnlineColor(null);
+    setOnlineOpponent(null);
+    setOnlineWaiting(false);
+    setOnlineStarted(false);
+    setOnlineError("");
 
-  setGameResult(null);
-  setShowPromotion(null);
+    setGameResult(null);
+    setShowPromotion(null);
 
-  resetGameForOnline();
-}, [mode, emit, resetGameForOnline]);
+    resetGameForOnline();
+  }, [mode, emit, resetGameForOnline]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <GameHeader
         thinking={thinking}
-        backendStatus={
-          backendStatus
-        }
+        backendStatus={backendStatus}
         user={user}
         logout={logout}
       />
 
-      {mode === "online" &&
-        !onlineStarted && (
-          <OnlineLobby
-            user={user}
-            socketConnected={
-              socketConnected
-            }
-            connectionError={
-              connectionError
-            }
-            onlineRoomCode={
-              onlineRoomCode
-            }
-            onlineWaiting={
-              onlineWaiting
-            }
-            onlineError={
-              onlineError
-            }
-            onCreatePrivateRoom={
-              createPrivateRoom
-            }
-            onJoinPrivateRoom={
-              joinPrivateRoom
-            }
-            onQuickMatch={
-              startQuickMatch
-            }
-          />
-        )}
+      {mode === "online" && !onlineStarted && (
+        <OnlineLobby
+          user={user}
+          socketConnected={socketConnected}
+          connectionError={connectionError}
+          onlineRoomCode={onlineRoomCode}
+          onlineWaiting={onlineWaiting}
+          onlineError={onlineError}
+          onCreatePrivateRoom={createPrivateRoom}
+          onJoinPrivateRoom={joinPrivateRoom}
+          onQuickMatch={startQuickMatch}
+        />
+      )}
 
-      {mode === "online" &&
-        !onlineStarted ? null : (
+      {mode === "online" && !onlineStarted ? null : (
         <main className="mx-auto grid max-w-7xl gap-5 px-3 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:py-6">
           <section className="flex min-w-0 flex-col items-center">
             <GameTopBar
               mode={mode}
-              playerColor={
-                playerColor
-              }
-              thinking={
-                thinking
-              }
-              gameResult={
-                gameResult
-              }
+              playerColor={playerColor}
+              thinking={thinking}
+              gameResult={gameResult}
               turn={game.turn()}
-              whiteTime={
-                formatTime(
-                  whiteTime
-                )
-              }
-              blackTime={
-                formatTime(
-                  blackTime
-                )
-              }
+              whiteTime={formatTime(whiteTime)}
+              blackTime={formatTime(blackTime)}
             />
 
-            {mode === "online" &&
-              onlineStarted && (
-<OnlineGameInfo
-  user={user}
-  onlineColor={onlineColor}
-  onlineRoomCode={onlineRoomCode}
-  onlineOpponent={onlineOpponent}
-  onLeaveGame={leaveOnlineGame}
-/>
-              )}
+            {mode === "online" && onlineStarted && (
+              <OnlineGameInfo
+                user={user}
+                onlineColor={onlineColor}
+                onlineRoomCode={onlineRoomCode}
+                onlineOpponent={onlineOpponent}
+                onLeaveGame={leaveOnlineGame}
+              />
+            )}
 
             <ChessBoard
               game={game}
-              selectedSquare={
-                selectedSquare
-              }
-              legalMoves={
-                legalMoves
-              }
-              lastMove={
-                lastMove
-              }
-              onSquareClick={
-                handleSquareClick
-              }
-              boardTheme={
-                boardTheme
-              }
+              selectedSquare={selectedSquare}
+              legalMoves={legalMoves}
+              lastMove={lastMove}
+              onSquareClick={handleSquareClick}
+              boardTheme={boardTheme}
             />
           </section>
 
           <GameSidebar
             mode={mode}
             setMode={setMode}
-            difficulty={
-              difficulty
-            }
-            setDifficulty={
-              setDifficulty
-            }
-            playerColor={
-              playerColor
-            }
-            setPlayerColor={
-              setPlayerColor
-            }
-            capturedPieces={
-              capturedPieces
-            }
-            soundEnabled={
-              soundEnabled
-            }
-            setSoundEnabled={
-              setSoundEnabled
-            }
+            difficulty={difficulty}
+            onOnlineMode={handleOnlineMode}
+            setDifficulty={setDifficulty}
+            playerColor={playerColor}
+            setPlayerColor={setPlayerColor}
+            capturedPieces={capturedPieces}
+            soundEnabled={soundEnabled}
+            setSoundEnabled={setSoundEnabled}
             thinking={thinking}
-            backendStatus={
-              backendStatus
-            }
-            boardTheme={
-              boardTheme
-            }
-            setBoardTheme={
-              setBoardTheme
-            }
+            backendStatus={backendStatus}
+            boardTheme={boardTheme}
+            setBoardTheme={setBoardTheme}
             history={history}
             onReset={resetGame}
             onUndo={undoMove}
@@ -1876,30 +1383,30 @@ const cleanupOpponentLeft = on(
       )}
 
       {gameResult && (
-<GameModal
-  type="gameover"
-  result={gameResult}
-  onRestart={() => {
-    if (mode === "online") {
-      setGameResult(null);
-      resetGameForOnline();
-      setOnlineStarted(false);
-      setOnlineOpponent(null);
-    } else {
-      resetGame();
-    }
-  }}
-  onClose={() => setGameResult(null)}
-/>
+        <GameModal
+          type="gameover"
+          result={gameResult}
+          onRestart={() => {
+            if (mode === "online") {
+              setGameResult(null);
+              resetGameForOnline();
+              setOnlineStarted(false);
+              setOnlineOpponent(null);
+            } else {
+              resetGame();
+            }
+          }}
+          onClose={() => setGameResult(null)}
+        />
       )}
 
       {showPromotion && (
         <GameModal
-  type="promotion"
-  color={gameRef.current.turn()}
-  onPromotion={handlePromotion}
-  onClose={() => setShowPromotion(null)}
-/>
+          type="promotion"
+          color={gameRef.current.turn()}
+          onPromotion={handlePromotion}
+          onClose={() => setShowPromotion(null)}
+        />
       )}
     </div>
   );

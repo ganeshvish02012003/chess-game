@@ -63,15 +63,10 @@ const THEME_OPTIONS = [
   },
 ];
 
-function CapturedPieces({
-  title,
-  pieces = [],
-  color,
-}) {
+function CapturedPieces({ title, pieces = [], color }) {
   const material = pieces.reduce(
-    (total, piece) =>
-      total + (PIECE_VALUES[piece] || 0),
-    0
+    (total, piece) => total + (PIECE_VALUES[piece] || 0),
+    0,
   );
 
   return (
@@ -80,9 +75,7 @@ function CapturedPieces({
         <div className="flex items-center gap-2">
           <span
             className={`h-2 w-2 rounded-full ${
-              color === "white"
-                ? "bg-white"
-                : "bg-zinc-700"
+              color === "white" ? "bg-white" : "bg-zinc-700"
             }`}
           />
 
@@ -92,29 +85,22 @@ function CapturedPieces({
         </div>
 
         <span className="text-xs text-zinc-600">
-          {material > 0
-            ? `+${material}`
-            : ""}
+          {material > 0 ? `+${material}` : ""}
         </span>
       </div>
 
       {pieces.length === 0 ? (
-        <div className="text-xs text-zinc-700">
-          No captures
-        </div>
+        <div className="text-xs text-zinc-700">No captures</div>
       ) : (
         <div className="flex min-h-8 flex-wrap items-center gap-0.5">
           {pieces.map((piece, index) => (
             <span
               key={`${piece}-${index}`}
               className={`text-2xl leading-none ${
-                color === "white"
-                  ? "text-white"
-                  : "text-zinc-900"
+                color === "white" ? "text-white" : "text-zinc-900"
               }`}
               style={{
-                fontFamily:
-                  '"Noto Sans Symbols 2", "Segoe UI Symbol", serif',
+                fontFamily: '"Noto Sans Symbols 2", "Segoe UI Symbol", serif',
                 textShadow:
                   color === "black"
                     ? "0 1px 2px rgba(255,255,255,.25)"
@@ -122,9 +108,7 @@ function CapturedPieces({
               }}
               title={piece}
             >
-              {PIECES[piece]?.[
-                color
-              ] || ""}
+              {PIECES[piece]?.[color] || ""}
             </span>
           ))}
         </div>
@@ -136,6 +120,7 @@ function CapturedPieces({
 function GameSidebar({
   mode,
   setMode,
+  onOnlineMode,
   difficulty,
   setDifficulty,
   playerColor,
@@ -158,13 +143,9 @@ function GameSidebar({
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 shadow-xl shadow-black/10">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-zinc-100">
-              Game Settings
-            </h2>
+            <h2 className="font-bold text-zinc-100">Game Settings</h2>
 
-            <p className="mt-0.5 text-xs text-zinc-600">
-              Configure your game
-            </p>
+            <p className="mt-0.5 text-xs text-zinc-600">Configure your game</p>
           </div>
 
           {thinking && (
@@ -175,52 +156,51 @@ function GameSidebar({
           )}
         </div>
 
-
         {/* Mode */}
 
-<div className="mb-4">
-  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-600">
-    Game Mode
-  </label>
+        <div className="mb-4">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+            Game Mode
+          </label>
 
-  <div className="grid grid-cols-3 gap-2">
-    <button
-      type="button"
-      onClick={() => setMode("computer")}
-      className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
-        mode === "computer"
-          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-          : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
-      }`}
-    >
-      Computer
-    </button>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setMode("computer")}
+              className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
+                mode === "computer"
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                  : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+              }`}
+            >
+              Computer
+            </button>
 
-    <button
-      type="button"
-      onClick={() => setMode("local")}
-      className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
-        mode === "local"
-          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-          : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
-      }`}
-    >
-      2 Players
-    </button>
+            <button
+              type="button"
+              onClick={() => setMode("local")}
+              className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
+                mode === "local"
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                  : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+              }`}
+            >
+              2 Players
+            </button>
 
-    <button
-      type="button"
-      onClick={() => setMode("online")}
-      className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
-        mode === "online"
-          ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-          : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
-      }`}
-    >
-      Online
-    </button>
-  </div>
-</div>
+            <button
+              type="button"
+              onClick={onOnlineMode}
+              className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
+                mode === "online"
+                  ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
+                  : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+              }`}
+            >
+              Online
+            </button>
+          </div>
+        </div>
 
         {/* Difficulty */}
 
@@ -231,24 +211,20 @@ function GameSidebar({
             </label>
 
             <div className="grid grid-cols-3 gap-2">
-              {["easy", "medium", "hard"].map(
-                (level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() =>
-                      setDifficulty(level)
-                    }
-                    className={`rounded-xl border px-2 py-2 text-xs font-bold capitalize transition ${
-                      difficulty === level
-                        ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-                        : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700"
-                    }`}
-                  >
-                    {level}
-                  </button>
-                )
-              )}
+              {["easy", "medium", "hard"].map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setDifficulty(level)}
+                  className={`rounded-xl border px-2 py-2 text-xs font-bold capitalize transition ${
+                    difficulty === level
+                      ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
+                      : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700"
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -264,9 +240,7 @@ function GameSidebar({
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() =>
-                  setPlayerColor("white")
-                }
+                onClick={() => setPlayerColor("white")}
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
                   playerColor === "white"
                     ? "border-white/30 bg-white/10 text-white"
@@ -278,9 +252,7 @@ function GameSidebar({
 
               <button
                 type="button"
-                onClick={() =>
-                  setPlayerColor("black")
-                }
+                onClick={() => setPlayerColor("black")}
                 className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
                   playerColor === "black"
                     ? "border-white/30 bg-white/10 text-white"
@@ -305,9 +277,7 @@ function GameSidebar({
               <button
                 key={theme.id}
                 type="button"
-                onClick={() =>
-                  setBoardTheme(theme.id)
-                }
+                onClick={() => setBoardTheme(theme.id)}
                 className={`group flex items-center gap-2 rounded-xl border p-2 transition ${
                   boardTheme === theme.id
                     ? "border-emerald-500/50 bg-emerald-500/5"
@@ -315,26 +285,10 @@ function GameSidebar({
                 }`}
               >
                 <span className="grid h-7 w-7 grid-cols-2 overflow-hidden rounded-md border border-black/20">
-                  <span
-                    className={
-                      theme.light
-                    }
-                  />
-                  <span
-                    className={
-                      theme.dark
-                    }
-                  />
-                  <span
-                    className={
-                      theme.dark
-                    }
-                  />
-                  <span
-                    className={
-                      theme.light
-                    }
-                  />
+                  <span className={theme.light} />
+                  <span className={theme.dark} />
+                  <span className={theme.dark} />
+                  <span className={theme.light} />
                 </span>
 
                 <span
@@ -366,21 +320,15 @@ function GameSidebar({
 
           <button
             type="button"
-            onClick={() =>
-              setSoundEnabled((value) => !value)
-            }
+            onClick={() => setSoundEnabled((value) => !value)}
             className={`relative h-6 w-11 rounded-full transition ${
-              soundEnabled
-                ? "bg-emerald-500"
-                : "bg-zinc-700"
+              soundEnabled ? "bg-emerald-500" : "bg-zinc-700"
             }`}
             aria-label="Toggle sound"
           >
             <span
               className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition ${
-                soundEnabled
-                  ? "left-6"
-                  : "left-1"
+                soundEnabled ? "left-6" : "left-1"
               }`}
             />
           </button>
@@ -391,9 +339,7 @@ function GameSidebar({
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4">
         <div className="mb-3">
-          <h2 className="font-bold text-zinc-100">
-            Captured Pieces
-          </h2>
+          <h2 className="font-bold text-zinc-100">Captured Pieces</h2>
 
           <p className="mt-0.5 text-xs text-zinc-600">
             Material captured during this game
@@ -403,17 +349,13 @@ function GameSidebar({
         <div className="space-y-2">
           <CapturedPieces
             title="White Captured"
-            pieces={
-              capturedPieces?.white || []
-            }
+            pieces={capturedPieces?.white || []}
             color="white"
           />
 
           <CapturedPieces
             title="Black Captured"
-            pieces={
-              capturedPieces?.black || []
-            }
+            pieces={capturedPieces?.black || []}
             color="black"
           />
         </div>
@@ -429,18 +371,14 @@ function GameSidebar({
         >
           New Game
         </button>
-<button
-  type="button"
-  onClick={onUndo}
-  disabled={
-    thinking ||
-    history.length === 0 ||
-    mode === "online"
-  }
-  className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
->
-  {mode === "online" ? "Undo Disabled" : "Undo"}
-</button>
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={thinking || history.length === 0 || mode === "online"}
+          className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {mode === "online" ? "Undo Disabled" : "Undo"}
+        </button>
       </div>
 
       {/* Move History */}
@@ -452,24 +390,22 @@ function GameSidebar({
       {/* Backend */}
 
       <div className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2">
-        <span className="text-xs text-zinc-600">
-          Server
-        </span>
+        <span className="text-xs text-zinc-600">Server</span>
 
         <span
           className={`text-xs font-semibold ${
             backendStatus === "online"
               ? "text-emerald-400"
               : backendStatus === "offline"
-              ? "text-red-400"
-              : "text-zinc-500"
+                ? "text-red-400"
+                : "text-zinc-500"
           }`}
         >
           {backendStatus === "online"
             ? "Connected"
             : backendStatus === "offline"
-            ? "Offline"
-            : "Checking"}
+              ? "Offline"
+              : "Checking"}
         </span>
       </div>
     </aside>
