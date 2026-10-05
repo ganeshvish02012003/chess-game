@@ -176,7 +176,7 @@ function GameSidebar({
         </div>
 
         {/* Mode */}
-
+{/* 
         <div className="mb-4">
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-600">
             Game Mode
@@ -207,7 +207,54 @@ function GameSidebar({
               2 Players
             </button>
           </div>
-        </div>
+        </div> */}
+
+
+        {/* Mode */}
+
+<div className="mb-4">
+  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-600">
+    Game Mode
+  </label>
+
+  <div className="grid grid-cols-3 gap-2">
+    <button
+      type="button"
+      onClick={() => setMode("computer")}
+      className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
+        mode === "computer"
+          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+          : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+      }`}
+    >
+      Computer
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setMode("local")}
+      className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
+        mode === "local"
+          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+          : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+      }`}
+    >
+      2 Players
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setMode("online")}
+      className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
+        mode === "online"
+          ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
+          : "border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+      }`}
+    >
+      Online
+    </button>
+  </div>
+</div>
 
         {/* Difficulty */}
 
@@ -416,17 +463,18 @@ function GameSidebar({
         >
           New Game
         </button>
-
-        <button
-          type="button"
-          onClick={onUndo}
-          disabled={
-            thinking || history.length === 0
-          }
-          className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Undo
-        </button>
+<button
+  type="button"
+  onClick={onUndo}
+  disabled={
+    thinking ||
+    history.length === 0 ||
+    mode === "online"
+  }
+  className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+>
+  {mode === "online" ? "Undo Disabled" : "Undo"}
+</button>
       </div>
 
       {/* Move History */}

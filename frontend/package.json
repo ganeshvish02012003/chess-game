@@ -12,6 +12,7 @@
     "chess.js": "^1.4.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "socket.io-client": "^4.8.4",
     "stockfish.js": "^10.0.2"
   },
   "devDependencies": {
