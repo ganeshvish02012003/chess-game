@@ -1,40 +1,4 @@
-import MoveHistory from "./MoveHistory";
 
-const PIECES = {
-  p: {
-    white: "♙",
-    black: "♟",
-  },
-  n: {
-    white: "♘",
-    black: "♞",
-  },
-  b: {
-    white: "♗",
-    black: "♝",
-  },
-  r: {
-    white: "♖",
-    black: "♜",
-  },
-  q: {
-    white: "♕",
-    black: "♛",
-  },
-  k: {
-    white: "♔",
-    black: "♚",
-  },
-};
-
-const PIECE_VALUES = {
-  p: 1,
-  n: 3,
-  b: 3,
-  r: 5,
-  q: 9,
-  k: 0,
-};
 
 const THEME_OPTIONS = [
   {
@@ -63,61 +27,7 @@ const THEME_OPTIONS = [
   },
 ];
 
-function CapturedPieces({ title, pieces = [], color }) {
-  const material = pieces.reduce(
-    (total, piece) => total + (PIECE_VALUES[piece] || 0),
-    0,
-  );
-
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3">
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              color === "white" ? "bg-white" : "bg-zinc-700"
-            }`}
-          />
-
-          <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-            {title}
-          </span>
-        </div>
-
-        <span className="text-xs text-zinc-600">
-          {material > 0 ? `+${material}` : ""}
-        </span>
-      </div>
-
-      {pieces.length === 0 ? (
-        <div className="text-xs text-zinc-700">No captures</div>
-      ) : (
-        <div className="flex min-h-8 flex-wrap items-center gap-0.5">
-          {pieces.map((piece, index) => (
-            <span
-              key={`${piece}-${index}`}
-              className={`text-2xl leading-none ${
-                color === "white" ? "text-white" : "text-zinc-900"
-              }`}
-              style={{
-                fontFamily: '"Noto Sans Symbols 2", "Segoe UI Symbol", serif',
-                textShadow:
-                  color === "black"
-                    ? "0 1px 2px rgba(255,255,255,.25)"
-                    : "0 2px 2px rgba(0,0,0,.35)",
-              }}
-              title={piece}
-            >
-              {PIECES[piece]?.[color] || ""}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function GameSidebar({
+function RightSideBar({
   mode,
   setMode,
   onOnlineMode,
@@ -125,38 +35,110 @@ function GameSidebar({
   setDifficulty,
   playerColor,
   setPlayerColor,
-  capturedPieces,
   soundEnabled,
   setSoundEnabled,
-  thinking,
-  backendStatus,
   boardTheme,
   setBoardTheme,
   history = [],
   onReset,
   onUndo,
+  thinking,
+  
+        
+        backendStatus,
+        user,
+        logout,
 }) {
   return (
-    <aside className="flex min-h-0 flex-col gap-4">
-      {/* Game settings */}
+    <aside className="flex min-h-0 w-full flex-col gap-4">
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 shadow-xl shadow-black/10">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="font-bold text-zinc-100">Game Settings</h2>
+      <div className="hidden md:flex items-center justify-end">
+         <div className="flex items-center gap-3">
 
-            <p className="mt-0.5 text-xs text-zinc-600">Configure your game</p>
+
+          <div
+            className={`rounded-full border px-3 py-1.5 text-xs ${
+              backendStatus === "online"
+                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                : backendStatus === "offline"
+                  ? "border-red-500/20 bg-red-500/10 text-red-400"
+                  : "border-zinc-700 bg-zinc-900 text-zinc-500"
+            }`}
+          >
+            {backendStatus === "online"
+              ? "Online"
+              : backendStatus === "offline"
+                ? "Offline"
+                : "Checking..."}
           </div>
 
-          {thinking && (
-            <div className="flex items-center gap-1.5 text-xs text-amber-400">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
-              Thinking
+          {user ? (
+            <div className="items-center gap-2 justify-items-start">
+              <span className="text-sm text-zinc-400 mr-4">{user.username}</span>
+
+              <button
+                type="button"
+                onClick={logout}
+                className="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800"
+              >
+                Logout
+              </button>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800"
+            >
+              Login
+            </button>
           )}
         </div>
+        </div>
+                {/* Actions */}
 
-        {/* Mode */}
+      <div className="grid grid-cols-2 gap-2 ">
+        <button
+          type="button"
+          onClick={onReset}
+          className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm font-bold text-emerald-400 transition hover:bg-emerald-500/20"
+        >
+          New Game
+        </button>
+
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={
+            thinking ||
+            history.length === 0 ||
+            mode === "online"
+          }
+          className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm font-bold text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {mode === "online" ? "Undo Disabled" : "Undo"}
+        </button>
+      </div>
+        
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 shadow-xl shadow-black/10">
+        {/* Header */}
+
+        
+
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="font-bold text-zinc-100">
+              Game Settings
+            </h2>
+
+            <p className="mt-0.5 text-xs text-zinc-600">
+              Configure your game
+            </p>
+          </div>
+
+        </div>
+
+        {/* Game Mode */}
 
         <div className="mb-4">
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-600">
@@ -265,7 +247,7 @@ function GameSidebar({
           </div>
         )}
 
-        {/* Board themes */}
+        {/* Board Theme */}
 
         <div className="mb-4">
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-600">
@@ -284,7 +266,7 @@ function GameSidebar({
                     : "border-zinc-800 bg-zinc-950 hover:border-zinc-700"
                 }`}
               >
-                <span className="grid h-7 w-7 grid-cols-2 overflow-hidden rounded-md border border-black/20">
+                <span className="grid h-7 w-7 shrink-0 grid-cols-2 overflow-hidden rounded-md border border-black/20">
                   <span className={theme.light} />
                   <span className={theme.dark} />
                   <span className={theme.dark} />
@@ -320,9 +302,13 @@ function GameSidebar({
 
           <button
             type="button"
-            onClick={() => setSoundEnabled((value) => !value)}
+            onClick={() =>
+              setSoundEnabled((value) => !value)
+            }
             className={`relative h-6 w-11 rounded-full transition ${
-              soundEnabled ? "bg-emerald-500" : "bg-zinc-700"
+              soundEnabled
+                ? "bg-emerald-500"
+                : "bg-zinc-700"
             }`}
             aria-label="Toggle sound"
           >
@@ -334,82 +320,20 @@ function GameSidebar({
           </button>
         </div>
       </div>
-
-      {/* Captured pieces */}
-
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4">
-        <div className="mb-3">
-          <h2 className="font-bold text-zinc-100">Captured Pieces</h2>
-
-          <p className="mt-0.5 text-xs text-zinc-600">
-            Material captured during this game
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <CapturedPieces
-            title="White Captured"
-            pieces={capturedPieces?.white || []}
-            color="white"
-          />
-
-          <CapturedPieces
-            title="Black Captured"
-            pieces={capturedPieces?.black || []}
-            color="black"
-          />
-        </div>
-      </div>
-
-      {/* Actions */}
-
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={onReset}
-          className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-bold text-emerald-400 transition hover:bg-emerald-500/20"
-        >
-          New Game
-        </button>
-        <button
-          type="button"
-          onClick={onUndo}
-          disabled={thinking || history.length === 0 || mode === "online"}
-          className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-bold text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {mode === "online" ? "Undo Disabled" : "Undo"}
-        </button>
-      </div>
-
-      {/* Move History */}
-
-      <div className="flex min-h-72 flex-1 flex-col rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4">
-        <MoveHistory history={history} />
-      </div>
-
-      {/* Backend */}
-
-      <div className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2">
-        <span className="text-xs text-zinc-600">Server</span>
-
-        <span
-          className={`text-xs font-semibold ${
-            backendStatus === "online"
-              ? "text-emerald-400"
-              : backendStatus === "offline"
-                ? "text-red-400"
-                : "text-zinc-500"
-          }`}
-        >
-          {backendStatus === "online"
-            ? "Connected"
-            : backendStatus === "offline"
-              ? "Offline"
-              : "Checking"}
-        </span>
-      </div>
     </aside>
   );
 }
 
-export default GameSidebar;
+export default RightSideBar;
+
+
+
+
+
+
+
+
+
+
+
+

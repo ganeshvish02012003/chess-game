@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Chess } from "chess.js";
 
 import ChessBoard from "../components/ChessBoard";
-import GameSidebar from "../components/GameSidebar";
+import LeftSideBar from "../components/LeftSideBar";
+import RightSideBar from "../components/RightSideBar";
 import GameModal from "../components/GameModal";
 import GameHeader from "../components/GameHeader";
 import GameTopBar from "../components/GameTopBar";
@@ -1328,8 +1329,20 @@ function ChessGame() {
       )}
 
       {mode === "online" && !onlineStarted ? null : (
-        <main className="mx-auto grid max-w-7xl gap-5 px-3 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:py-6">
-          <section className="flex min-w-0 flex-col items-center">
+        <main className="mx-auto grid w-full max-w-[1700px] grid-cols-1 gap-4 px-3 py-2 sm:px-6 lg:grid-cols-[25%_50%_25%] lg:gap-0 lg:px-4">
+          {/* ================= LEFT ================= */}
+
+          <section className="order-2 min-w-0 lg:order-1 lg:mr-0 ">
+            <div>
+              <h1 className="text-2xl font-black hidden md:block tracking-tight sm:text-3xl">
+                Chess
+              </h1>
+
+              <p className="mt-0.5 text-xs hidden md:block text-zinc-500">
+                React + Vite Chess Game
+              </p>
+            </div>
+
             <GameTopBar
               mode={mode}
               playerColor={playerColor}
@@ -1340,6 +1353,14 @@ function ChessGame() {
               blackTime={formatTime(blackTime)}
             />
 
+            <LeftSideBar
+              capturedPieces={capturedPieces}
+            />
+          </section>
+
+          {/* ================= CENTER ================= */}
+
+          <section className="order-1 lg:px-4 lg:pt-0 flex min-w-0 flex-col items-center lg:order-2">
             {mode === "online" && onlineStarted && (
               <OnlineGameInfo
                 user={user}
@@ -1360,25 +1381,30 @@ function ChessGame() {
             />
           </section>
 
-          <GameSidebar
-            mode={mode}
-            setMode={setMode}
-            difficulty={difficulty}
-            onOnlineMode={handleOnlineMode}
-            setDifficulty={setDifficulty}
-            playerColor={playerColor}
-            setPlayerColor={setPlayerColor}
-            capturedPieces={capturedPieces}
-            soundEnabled={soundEnabled}
-            setSoundEnabled={setSoundEnabled}
-            thinking={thinking}
-            backendStatus={backendStatus}
-            boardTheme={boardTheme}
-            setBoardTheme={setBoardTheme}
-            history={history}
-            onReset={resetGame}
-            onUndo={undoMove}
-          />
+          {/* ================= RIGHT ================= */}
+
+          <section className="order-3 min-w-0 ">
+            <RightSideBar
+              mode={mode}
+              setMode={setMode}
+              onOnlineMode={handleOnlineMode}
+              difficulty={difficulty}
+              setDifficulty={setDifficulty}
+              playerColor={playerColor}
+              setPlayerColor={setPlayerColor}
+              soundEnabled={soundEnabled}
+              setSoundEnabled={setSoundEnabled}
+              thinking={thinking}
+              boardTheme={boardTheme}
+              setBoardTheme={setBoardTheme}
+              backendStatus={backendStatus}
+              user={user}
+              logout={logout}
+              history={history}
+              onReset={resetGame}
+              onUndo={undoMove}
+            />
+          </section>
         </main>
       )}
 

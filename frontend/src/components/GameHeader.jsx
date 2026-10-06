@@ -1,12 +1,7 @@
-function GameHeader({
-  thinking,
-  backendStatus,
-  user,
-  logout,
-}) {
+function GameHeader({ thinking, backendStatus, user, logout }) {
   return (
-    <header className="border-b border-zinc-800 bg-zinc-950/95">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
+    <header className="border-b md:hidden border-zinc-800 bg-zinc-950/95">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 sm:px-6">
         <div>
           <h1 className="text-2xl font-black tracking-tight sm:text-3xl">
             Chess
@@ -30,30 +25,38 @@ function GameHeader({
               backendStatus === "online"
                 ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
                 : backendStatus === "offline"
-                ? "border-red-500/20 bg-red-500/10 text-red-400"
-                : "border-zinc-700 bg-zinc-900 text-zinc-500"
+                  ? "border-red-500/20 bg-red-500/10 text-red-400"
+                  : "border-zinc-700 bg-zinc-900 text-zinc-500"
             }`}
           >
             {backendStatus === "online"
-              ? "Backend Online"
+              ? "Online"
               : backendStatus === "offline"
-              ? "Backend Offline"
-              : "Checking..."}
+                ? "Offline"
+                : "Checking..."}
           </div>
 
-          <div className="hidden items-center gap-2 sm:flex">
-            <span className="text-sm text-zinc-400">
-              {user?.username}
-            </span>
+          {user ? (
+            <div className="md:hidden items-center gap-2 sm:flex">
+              <span className="text-sm text-zinc-400">{user.username}</span>
 
+              <button
+                type="button"
+                onClick={logout}
+                className="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
             <button
               type="button"
-              onClick={logout}
+              onClick={() => navigate("/login")}
               className="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:bg-zinc-800"
             >
-              Logout
+              Login
             </button>
-          </div>
+          )}
         </div>
       </div>
     </header>
