@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { loginUser } from "../api/authApi";
 import { useAuth } from "../context/AuthContext";
 
-function Login({ onSwitchToSignup }) {
+function Login() {
   const { setUser } = useAuth();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     email: "",
@@ -16,8 +18,7 @@ function Login({ onSwitchToSignup }) {
   const handleChange = (event) => {
     setForm((previous) => ({
       ...previous,
-      [event.target.name]:
-        event.target.value,
+      [event.target.name]: event.target.value,
     }));
   };
 
@@ -31,6 +32,9 @@ function Login({ onSwitchToSignup }) {
       const result = await loginUser(form);
 
       setUser(result.user);
+
+      // Login ke baad Chess Game
+      navigate("/", { replace: true });
     } catch (error) {
       setError(error.message);
     } finally {
@@ -41,13 +45,15 @@ function Login({ onSwitchToSignup }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
       <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+
+        {/* Logo / Heading */}
         <div className="mb-8 text-center">
           <div className="mb-3 text-5xl">
             ♟
           </div>
 
           <h1 className="text-3xl font-black text-white">
-            Chess Arena
+            Chessora
           </h1>
 
           <p className="mt-2 text-sm text-zinc-500">
@@ -55,12 +61,14 @@ function Login({ onSwitchToSignup }) {
           </p>
         </div>
 
+        {/* Error */}
         {error && (
           <div className="mb-4 rounded-xl border border-red-900/50 bg-red-950/40 px-4 py-3 text-sm text-red-400">
             {error}
           </div>
         )}
 
+        {/* Login Form */}
         <form
           onSubmit={handleSubmit}
           className="space-y-4"
@@ -94,20 +102,23 @@ function Login({ onSwitchToSignup }) {
           </button>
         </form>
 
+        {/* Signup */}
         <p className="mt-6 text-center text-sm text-zinc-500">
           Don't have an account?
         </p>
 
         <button
           type="button"
-          onClick={onSwitchToSignup}
+          onClick={() => navigate("/signup")}
           className="mt-2 w-full rounded-xl border border-zinc-700 px-4 py-3 font-semibold text-zinc-300 transition hover:bg-zinc-800"
         >
           Create Account
         </button>
+
       </div>
     </div>
   );
 }
 
 export default Login;
+

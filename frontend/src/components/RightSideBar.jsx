@@ -1,4 +1,4 @@
-
+import { useNavigate } from "react-router-dom";
 
 const THEME_OPTIONS = [
   {
@@ -43,19 +43,17 @@ function RightSideBar({
   onReset,
   onUndo,
   thinking,
-  
-        
-        backendStatus,
-        user,
-        logout,
+  handleOnlineMode,
+
+  backendStatus,
+  user,
+  logout,
 }) {
+  const navigate = useNavigate();
   return (
     <aside className="flex min-h-0 w-full flex-col gap-4">
-
       <div className="hidden md:flex items-center justify-end">
-         <div className="flex items-center gap-3">
-
-
+        <div className="flex items-center gap-3">
           <div
             className={`rounded-full border px-3 py-1.5 text-xs ${
               backendStatus === "online"
@@ -74,7 +72,9 @@ function RightSideBar({
 
           {user ? (
             <div className="items-center gap-2 justify-items-start">
-              <span className="text-sm text-zinc-400 mr-4">{user.username}</span>
+              <span className="text-sm text-zinc-400 mr-4">
+                {user.username}
+              </span>
 
               <button
                 type="button"
@@ -94,8 +94,8 @@ function RightSideBar({
             </button>
           )}
         </div>
-        </div>
-                {/* Actions */}
+      </div>
+      {/* Actions */}
 
       <div className="grid grid-cols-2 gap-2 ">
         <button
@@ -109,33 +109,22 @@ function RightSideBar({
         <button
           type="button"
           onClick={onUndo}
-          disabled={
-            thinking ||
-            history.length === 0 ||
-            mode === "online"
-          }
+          disabled={thinking || history.length === 0 || mode === "online"}
           className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm font-bold text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {mode === "online" ? "Undo Disabled" : "Undo"}
         </button>
       </div>
-        
+
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 shadow-xl shadow-black/10">
         {/* Header */}
 
-        
-
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-zinc-100">
-              Game Settings
-            </h2>
+            <h2 className="font-bold text-zinc-100">Game Settings</h2>
 
-            <p className="mt-0.5 text-xs text-zinc-600">
-              Configure your game
-            </p>
+            <p className="mt-0.5 text-xs text-zinc-600">Configure your game</p>
           </div>
-
         </div>
 
         {/* Game Mode */}
@@ -302,13 +291,9 @@ function RightSideBar({
 
           <button
             type="button"
-            onClick={() =>
-              setSoundEnabled((value) => !value)
-            }
+            onClick={() => setSoundEnabled((value) => !value)}
             className={`relative h-6 w-11 rounded-full transition ${
-              soundEnabled
-                ? "bg-emerald-500"
-                : "bg-zinc-700"
+              soundEnabled ? "bg-emerald-500" : "bg-zinc-700"
             }`}
             aria-label="Toggle sound"
           >
@@ -325,15 +310,3 @@ function RightSideBar({
 }
 
 export default RightSideBar;
-
-
-
-
-
-
-
-
-
-
-
-

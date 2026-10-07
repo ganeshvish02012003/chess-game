@@ -1,14 +1,17 @@
+import { useNavigate } from "react-router-dom";
+
 function GameHeader({ thinking, backendStatus, user, logout }) {
+  const navigate = useNavigate();
   return (
     <header className="border-b md:hidden border-zinc-800 bg-zinc-950/95">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 sm:px-6">
         <div>
           <h1 className="text-2xl font-black tracking-tight sm:text-3xl">
-            Chess
+            chessora
           </h1>
 
           <p className="mt-0.5 text-xs text-zinc-500">
-            React + Vite Chess Game
+            Think. Move. Conquer. ♟️
           </p>
         </div>
 

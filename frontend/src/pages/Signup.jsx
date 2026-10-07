@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { signupUser } from "../api/authApi";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-function Signup({ onSwitchToLogin }) {
+function Signup() {
   const { setUser } = useAuth();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     username: "",
@@ -63,7 +65,7 @@ function Signup({ onSwitchToLogin }) {
           </h1>
 
           <p className="mt-2 text-sm text-zinc-500">
-            Join Chess Arena
+            Join Chessora
           </p>
         </div>
 
@@ -136,7 +138,7 @@ function Signup({ onSwitchToLogin }) {
 
         <button
           type="button"
-          onClick={onSwitchToLogin}
+          onClick={() => navigate("/login")}
           className="mt-2 w-full rounded-xl border border-zinc-700 px-4 py-3 font-semibold text-zinc-300 transition hover:bg-zinc-800"
         >
           Login

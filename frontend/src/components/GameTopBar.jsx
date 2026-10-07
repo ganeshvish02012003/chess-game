@@ -33,7 +33,7 @@ function GameTopBar({
           }`}
         >
           {thinking
-            ? "Computer is thinking..."
+            ? "AI is thinking..."
             : gameResult
               ? "Game finished"
               : turn === "w"

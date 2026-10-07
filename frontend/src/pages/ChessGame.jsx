@@ -1335,11 +1335,11 @@ function ChessGame() {
           <section className="order-2 min-w-0 lg:order-1 lg:mr-0 ">
             <div>
               <h1 className="text-2xl font-black hidden md:block tracking-tight sm:text-3xl">
-                Chess
+                Chessora
               </h1>
 
               <p className="mt-0.5 text-xs hidden md:block text-zinc-500">
-                React + Vite Chess Game
+                Think. Move. Conquer. ♟️
               </p>
             </div>
 
@@ -1353,9 +1353,7 @@ function ChessGame() {
               blackTime={formatTime(blackTime)}
             />
 
-            <LeftSideBar
-              capturedPieces={capturedPieces}
-            />
+            <LeftSideBar capturedPieces={capturedPieces} history={history}/>
           </section>
 
           {/* ================= CENTER ================= */}
@@ -1400,7 +1398,6 @@ function ChessGame() {
               backendStatus={backendStatus}
               user={user}
               logout={logout}
-              history={history}
               onReset={resetGame}
               onUndo={undoMove}
             />
