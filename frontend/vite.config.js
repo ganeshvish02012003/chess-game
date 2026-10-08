@@ -19,12 +19,18 @@ export default defineConfig({
       manifest: {
         name: "Chessora - Chess Game",
         short_name: "Chessora",
+
         description:
           "A modern chess game with Real Computer AI powered by Stockfish.",
+
         theme_color: "#09090b",
         background_color: "#09090b",
+
         display: "standalone",
         orientation: "any",
+
+        start_url: "/",
+        scope: "/",
 
         icons: [
           {

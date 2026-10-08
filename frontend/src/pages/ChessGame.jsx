@@ -1400,6 +1400,7 @@ function ChessGame() {
               logout={logout}
               onReset={resetGame}
               onUndo={undoMove}
+              history={history}
             />
           </section>
         </main>
